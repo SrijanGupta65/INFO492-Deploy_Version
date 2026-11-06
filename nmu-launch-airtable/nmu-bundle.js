@@ -1,4 +1,4 @@
-// GENERATED from nmu-template.js + nmu-data.js by tools/build-bundle.mjs. Edit those files, then run `npm run build`.
+// GENERATED from nmu-template.js + nmu-data.js by tools/build-bundle.mjs. Edit those files, then run `npm run bundle`.
 (function(){
 // Generated from "Sample Template data.xlsx - Program Tasks.csv" (141 tasks).
 // [timeline label, task, primary role, supporting roles]

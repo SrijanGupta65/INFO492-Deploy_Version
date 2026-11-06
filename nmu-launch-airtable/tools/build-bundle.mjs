@@ -1,7 +1,7 @@
 // Rebuilds nmu-bundle.js from nmu-template.js + nmu-data.js.
 // The page loads the bundle as a plain script, so the module syntax is stripped and every
 // exported name is published on window.NMUData. Run after editing either source file:
-//   npm run build
+//   npm run bundle
 import { readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,7 +22,7 @@ const body = sources.map(file => {
     .join('\n');
 }).join('\n');
 
-const out = `// GENERATED from nmu-template.js + nmu-data.js by tools/build-bundle.mjs. Edit those files, then run \`npm run build\`.
+const out = `// GENERATED from nmu-template.js + nmu-data.js by tools/build-bundle.mjs. Edit those files, then run \`npm run bundle\`.
 (function(){
 ${body}
 window.NMUData = { ${names.join(', ')} };
