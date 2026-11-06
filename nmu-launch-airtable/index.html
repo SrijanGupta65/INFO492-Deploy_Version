@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<script src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+<script>
+  // On a deployed site, read and write NMU's Airtable base through the server proxy (api/airtable).
+  // Opened as a local file, or with ?mock=1, the app runs on sample data stored in this browser.
+  if (/^https?:$/.test(location.protocol) && !/[?&]mock=1\b/.test(location.search)) window.NMU_AIRTABLE = { proxyUrl: '/api/airtable' };
+</script>
+<script src="./nmu-bundle.js"></script>
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#161826"></rect><rect x="30" y="30" width="40" height="40" rx="8" fill="none" stroke="#2340A8" stroke-width="3"></rect><text x="50" y="56" text-anchor="middle" font-family="Helvetica" font-size="13" font-weight="600" fill="#d2cefd">NMU</text></svg></template>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
+<style>body{margin:0;background:#FBF8F1;color:#14213D;font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-serif;font-size:14px} a{color:#1F3A9E;text-decoration:underline} a:hover{color:#142B7A} :focus-visible{outline:3px solid #2340A8;outline-offset:2px} input,select,textarea,button{font-family:inherit} button:disabled,select:disabled,input:disabled{cursor:not-allowed;opacity:.6} @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
+</helmet>
+<div style="display:flex;min-height:100vh;background:#FBF8F1;color:#14213D;font-size:14px;line-height:1.5">
+  <a href="#main" style="position:absolute;left:-9999px;top:8px;z-index:100;background:#14213D;color:#FFFFFF;padding:10px 16px;border-radius:8px;font-weight:600" style-focus="left:8px">Skip to main content</a>
+
+  <aside style="width:224px;flex:none;position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:20px;padding:18px 12px;background:#FFFFFF;border-right:1px solid #D5DCE8;box-sizing:border-box">
+    <div style="display:flex;flex-direction:column;gap:6px;padding:2px 6px 0">
+      <img src="./assets/nmu-logo.png" alt="No More Under" style="width:100%;max-width:184px;height:auto;display:block">
+      <div style="font-size:13px;color:#46526F">Launch planner</div>
+    </div>
+    <nav aria-label="Main" style="display:flex;flex-direction:column;gap:2px">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="5">
+        <button onClick="{{ n.go }}" aria-current="{{ n.current }}" style="display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:6px;border:0;background:{{ n.bg }};color:{{ n.fg }};font-size:14px;text-align:left;cursor:pointer;white-space:nowrap;flex:none"><i aria-hidden="true" class="{{ n.icon }}" style="font-size:17px"></i><span style="flex:1">{{ n.label }}</span><span style="font-size:12px;color:#56627F">{{ n.badge }}</span></button>
+      </sc-for>
+    </nav>
+    <div style="margin-top:auto;display:flex;flex-direction:column;gap:8px;padding:10px;border:1px solid #E7ECF4;border-radius:8px">
+      <label for="role-switch" style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Viewing as</label>
+      <select id="role-switch" key="{{ userId }}" value="{{ userId }}" onChange="{{ onUser }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px;width:100%">
+        <sc-for list="{{ userOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for>
+      </select>
+      <div style="font-size:12.5px;color:#56627F">{{ accessNote }}</div>
+      <div style="display:flex;align-items:center;gap:6px;font-size:12.5px;color:#46526F"><span style="width:6px;height:6px;border-radius:50%;background:{{ modeDot }}"></span>{{ modeLabel }}</div>
+    </div>
+  </aside>
+
+  <main id="main" tabIndex="-1" style="flex:1;min-width:0;outline:none">
+    <sc-if value="{{ loading }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:40px 32px;color:#56627F">Loading launches…</div>
+    </sc-if>
+
+    <!-- MY TASKS -->
+    <sc-if value="{{ isMy }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="My Tasks" style="padding:28px 32px 60px;max-width:1100px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+          <div>
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">{{ meRole }}</div>
+            <h1 style="font-size:26px;margin:2px 0 4px">My tasks</h1>
+            <div style="color:#46526F">{{ my.summary }}</div>
+          </div>
+          <div style="display:flex;gap:2px;padding:2px;border:1px solid #8792AC;border-radius:8px;flex:none">
+            <sc-for list="{{ my.scopes }}" as="sc"><button onClick="{{ sc.go }}" aria-pressed="{{ sc.selected }}" style="border:0;border-radius:6px;padding:5px 12px;font-size:13.5px;cursor:pointer;white-space:nowrap;background:{{ sc.bg }};color:{{ sc.fg }}">{{ sc.label }}</button></sc-for>
+          </div>
+        </div>
+        <sc-if value="{{ my.hasProgFilters }}">
+          <div role="group" aria-label="Filter my tasks by program" style="display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 20px">
+            <sc-for list="{{ my.progFilters }}" as="pf">
+              <button onClick="{{ pf.go }}" aria-pressed="{{ pf.selected }}" aria-label="{{ pf.ariaLabel }}" style="display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:6px 14px;border-radius:999px;border:1px solid {{ pf.border }};background:{{ pf.bg }};color:{{ pf.fg }};font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none" style-hover="border-color:#2340A8">
+                <span>{{ pf.label }}</span>
+                <span style="font-weight:400;color:{{ pf.countFg }}">{{ pf.count }}</span>
+                <sc-if value="{{ pf.hasOverdue }}"><span style="font-size:12px;font-weight:600;padding:1px 7px;border-radius:999px;background:#FFF1DE;color:#8A4600">{{ pf.odLabel }}</span></sc-if>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ my.filtered }}">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:12px 16px;margin-bottom:20px;border:1px solid #9DB4EC;background:#F2F6FD;border-radius:10px">
+            <div><div style="font-weight:600;font-size:15px">{{ my.filterName }}</div><div style="font-size:13.5px;color:#46526F">{{ my.filterDay1 }}</div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-if value="{{ my.canOpenProgram }}"><button onClick="{{ my.openProgram }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 12px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Open program</button></sc-if>
+            </div>
+          </div>
+        </sc-if>
+        <sc-if value="{{ my.empty }}" hint-placeholder-val="{{ false }}">
+          <div style="padding:28px;border:1px dashed #8792AC;border-radius:8px;color:#46526F">{{ my.emptyText }}</div>
+        </sc-if>
+        <sc-for list="{{ my.groups }}" as="g" hint-placeholder-count="2">
+          <section style="margin-bottom:24px">
+            <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:8px">
+              <h2 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0;color:{{ g.color }}">{{ g.label }}</h2>
+              <span style="font-size:13px;color:#56627F">{{ g.count }}</span>
+            </div>
+            <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
+              <sc-for list="{{ g.tasks }}" as="t" hint-placeholder-count="3">
+                <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,150px) 104px 132px;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid #E7ECF4;cursor:pointer;background:#FFFFFF" style-hover="background:#F2F6FD">
+                  <div style="min-width:0">
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0"><button onClick="{{ t.open }}" title="{{ t.name }}" style="text-wrap:pretty;background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;min-width:0">{{ t.name }}</button>
+                      <sc-if value="{{ t.partnerOwned }}"><span style="font-size:12px;padding:1px 6px;border-radius:4px;border:1px solid #A9B5CC;color:#46526F;flex:none">Partner</span></sc-if>
+                      <sc-if value="{{ t.waiting }}"><span title="{{ t.waitTitle }}" style="font-size:12px;color:#8A4600;flex:none;display:inline-flex;gap:3px;align-items:center"><i aria-hidden="true" class="ph ph-link"></i>{{ t.waitLabel }}</span></sc-if>
+                    </div>
+                    <div style="font-size:13px;color:#56627F;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.sub }}</div>
+                  </div>
+                  <div style="font-size:13.5px;color:{{ t.ownerColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.ownerName }}</div>
+                  <div><div style="font-size:13.5px">{{ t.dueLabel }}</div><div style="font-size:12.5px;color:{{ t.relColor }}">{{ t.relLabel }}</div></div>
+                  <select value="{{ t.status }}" aria-label="{{ t.statusLabel }}" onClick="{{ stop }}" onChange="{{ t.onStatus }}" disabled="{{ t.disabled }}" style="border:0;border-radius:4px;padding:4px 6px;font-size:13px;background:{{ t.statusBg }};color:{{ t.statusFg }};cursor:pointer"><option>Not started</option><option>In progress</option><option>Blocked</option><option>Done</option></select>
+                </div>
+              </sc-for>
+            </div>
+            <sc-if value="{{ g.hasMore }}"><button onClick="{{ g.showMore }}" style="margin-top:8px;background:transparent;border:0;color:#1F3A9E;font-size:13.5px;cursor:pointer;padding:0;white-space:nowrap;flex:none">{{ g.moreLabel }}</button></sc-if>
+          </section>
+        </sc-for>
+        <sc-if value="{{ my.hasLater }}"><button onClick="{{ my.toggleLater }}" aria-expanded="{{ my.showLater }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="{{ my.laterIcon }}"></i>{{ my.laterLabel }}</button></sc-if>
+      </div>
+    </sc-if>
+
+    <!-- ALL PROGRAMS -->
+    <sc-if value="{{ isPrograms }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="All Programs" style="padding:28px 32px 60px;max-width:1200px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+          <div>
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Leadership view</div>
+            <h1 style="font-size:26px;margin:2px 0 4px">All programs</h1>
+            <div style="color:#46526F">{{ all.summary }}</div>
+          </div>
+          <sc-if value="{{ canCreate }}"><button onClick="{{ goNew }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-plus"></i>New program</button></sc-if>
+        </div>
+        <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:auto">
+          <div style="display:grid;grid-template-columns:minmax(220px,1.6fr) 90px 150px minmax(140px,1fr) 70px 70px minmax(180px,1.2fr) 96px;gap:12px;padding:8px 14px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#56627F;border-bottom:1px solid #8792AC;min-width:1040px">
+            <div>Program</div><div>Type</div><div>Day 1</div><div>Progress</div><div>Overdue</div><div>Blocked</div><div>Next up</div><div>Health</div>
+          </div>
+          <sc-for list="{{ all.rows }}" as="p" hint-placeholder-count="4">
+            <div onClick="{{ p.open }}" style="display:grid;grid-template-columns:minmax(220px,1.6fr) 90px 150px minmax(140px,1fr) 70px 70px minmax(180px,1.2fr) 96px;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;cursor:pointer;min-width:1040px" style-hover="background:#F2F6FD">
+              <div style="min-width:0"><button onClick="{{ p.open }}" style="background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;flex:none">{{ p.name }}</button><div style="font-size:13px;color:#56627F">{{ p.location }}</div></div>
+              <div><span style="font-size:12px;padding:2px 7px;border-radius:4px;background:#E7ECF4;color:#2E3A59">{{ p.typeCode }}</span></div>
+              <div><div>{{ p.day1Label }}</div><div style="font-size:12.5px;color:#56627F">{{ p.countdown }}</div></div>
+              <div><div role="progressbar" aria-valuenow="{{ p.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ p.pctLabel }}" style="height:6px;border-radius:3px;background:#E7ECF4;overflow:hidden"><div style="height:100%;width:{{ p.pctW }};background:#2340A8"></div></div><div style="font-size:12.5px;color:#56627F;margin-top:4px">{{ p.doneLabel }}</div></div>
+              <div style="color:{{ p.overdueColor }}">{{ p.overdue }}</div>
+              <div style="color:{{ p.blockedColor }}">{{ p.blocked }}</div>
+              <div style="min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.nextName }}</div><div style="font-size:12.5px;color:#56627F">{{ p.nextMeta }}</div></div>
+              <div><span style="font-size:12.5px;padding:2px 8px;border-radius:4px;background:{{ p.healthBg }};color:{{ p.healthFg }}">{{ p.health }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- PROGRAM DETAIL -->
+    <sc-if value="{{ isProgram }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Program Details" style="padding:22px 32px 60px;max-width:1120px">
+        <button onClick="{{ goPrograms }}" style="background:transparent;border:0;color:#46526F;font-size:13.5px;padding:0;cursor:pointer;display:inline-flex;gap:4px;align-items:center;margin-bottom:12px;white-space:nowrap;flex:none"><i aria-hidden="true" class="ph ph-arrow-left"></i>All programs</button>
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div style="min-width:0">
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px"><span style="font-size:12px;padding:2px 7px;border-radius:4px;background:#E7ECF4;color:#2E3A59">{{ pg.typeName }}</span><span style="font-size:12.5px;padding:2px 8px;border-radius:4px;background:{{ pg.healthBg }};color:{{ pg.healthFg }}">{{ pg.health }}</span></div>
+            <h1 style="font-size:26px;margin:0 0 4px">{{ pg.name }}</h1>
+            <div style="color:#46526F">{{ pg.location }} · {{ pg.partnerOrg }}</div>
+          </div>
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
+            <div style="text-align:right"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Day 1</div><div style="font-size:18px;font-weight:500">{{ pg.day1Long }}</div><div style="font-size:13px;color:#56627F">{{ pg.countdown }}</div></div>
+            <sc-if value="{{ canEdit }}"><button onClick="{{ openResched }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-calendar-dots"></i>Move Day 1</button></sc-if>
+          </div>
+        </div>
+        <div style="display:flex;gap:18px;align-items:center;padding:10px 0 0;margin-bottom:16px;border-bottom:1px solid #E7ECF4">
+          <sc-for list="{{ pg.tabs }}" as="tb"><button onClick="{{ tb.go }}" aria-pressed="{{ tb.selected }}" style="background:transparent;border:0;border-bottom:2px solid {{ tb.line }};color:{{ tb.fg }};padding:0 0 9px;font-size:14px;cursor:pointer;white-space:nowrap;flex:none">{{ tb.label }}</button></sc-for>
+          <div style="margin-left:auto;font-size:13px;color:#56627F;padding-bottom:9px">{{ pg.doneLabel }}</div>
+        </div>
+
+        <sc-if value="{{ pg.isTimeline }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ canEdit }}">
+            <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+              <sc-if value="{{ addNoForm }}"><button onClick="{{ openAddTask }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none" style-hover="background:#E7ECF4"><i aria-hidden="true" class="ph ph-plus"></i>Add task</button></sc-if>
+            </div>
+          </sc-if>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
+            <div style="font-size:14px;color:#46526F">{{ pg.windowNote }}</div>
+            <sc-if value="{{ pg.hasHidden }}"><button onClick="{{ pg.toggleAll }}" aria-expanded="{{ pg.showAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;flex:none;white-space:nowrap" style-hover="background:#E4ECFC">{{ pg.allLabel }}</button></sc-if>
+          </div>
+          <sc-if value="{{ addOpen }}">
+            <div style="display:grid;grid-template-columns:minmax(0,2fr) 150px 190px auto auto;gap:8px;align-items:end;padding:12px;border:1px solid #9DB4EC;border-radius:8px;margin-bottom:16px;background:#FFFFFF">
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Additional task<input value="{{ addT.name }}" onChange="{{ addT.onName }}" placeholder="e.g. Confirm parking passes for instructors" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Due<input type="date" value="{{ addT.due }}" onChange="{{ addT.onDue }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:5px 8px;font-size:14px"></label>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Role<select key="{{ addT.role }}" value="{{ addT.role }}" onChange="{{ addT.onRole }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"><sc-for list="{{ roles }}" as="r"><option>{{ r }}</option></sc-for></select></label>
+              <button onClick="{{ cancelAddTask }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;white-space:nowrap;flex:none">Cancel</button>
+              <button onClick="{{ saveAddTask }}" disabled="{{ addT.invalid }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Add</button>
+            </div>
+          </sc-if>
+          <sc-for list="{{ pg.phases }}" as="ph" hint-placeholder-count="3">
+            <section style="margin-bottom:22px">
+              <button onClick="{{ ph.toggle }}" aria-expanded="{{ ph.open }}" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;background:transparent;border:0;padding:0;cursor:pointer;color:#2E3A59;white-space:nowrap;flex:none">
+                <i aria-hidden="true" class="{{ ph.chevron }}" style="font-size:13px;color:#56627F"></i>
+                <span style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;font-weight:500">{{ ph.label }}</span>
+                <span style="font-size:13px;color:#56627F">{{ ph.meta }}</span>
+              </button>
+              <div style="border:{{ ph.border }};border-radius:8px;overflow:hidden">
+                <sc-for list="{{ ph.tasks }}" as="t" hint-placeholder-count="3">
+                  <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,150px) 104px 132px;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid #E7ECF4;cursor:pointer;background:#FFFFFF" style-hover="background:#F2F6FD">
+                    <div style="min-width:0">
+                      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0"><button onClick="{{ t.open }}" title="{{ t.name }}" style="text-wrap:pretty;background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;min-width:0">{{ t.name }}</button>
+                        <sc-if value="{{ t.partnerOwned }}"><span style="font-size:12px;padding:1px 6px;border-radius:4px;border:1px solid #A9B5CC;color:#46526F;flex:none">Partner</span></sc-if>
+                        <sc-if value="{{ t.waiting }}"><span title="{{ t.waitTitle }}" style="font-size:12px;color:#8A4600;flex:none;display:inline-flex;gap:3px;align-items:center"><i aria-hidden="true" class="ph ph-link"></i>{{ t.waitLabel }}</span></sc-if>
+                      </div>
+                      <div style="font-size:13px;color:#56627F">{{ t.timing }}</div>
+                    </div>
+                    <div style="font-size:13.5px;color:{{ t.ownerColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.ownerName }}</div>
+                    <div><div style="font-size:13.5px">{{ t.dueLabel }}</div><div style="font-size:12.5px;color:{{ t.relColor }}">{{ t.relLabel }}</div></div>
+                    <select value="{{ t.status }}" aria-label="{{ t.statusLabel }}" onClick="{{ stop }}" onChange="{{ t.onStatus }}" disabled="{{ t.disabled }}" style="border:0;border-radius:4px;padding:4px 6px;font-size:13px;background:{{ t.statusBg }};color:{{ t.statusFg }};cursor:pointer"><option>Not started</option><option>In progress</option><option>Blocked</option><option>Done</option></select>
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+          <sc-if value="{{ pg.noVisible }}"><div style="padding:20px;border:1px dashed #A9B5CC;border-radius:8px;color:#46526F;margin-bottom:16px">No open tasks due in the next 30 days.</div></sc-if>
+          <sc-if value="{{ pg.hasHidden }}"><button onClick="{{ pg.toggleAll }}" aria-expanded="{{ pg.showAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="{{ pg.allIcon }}"></i>{{ pg.allLabel }}</button></sc-if>
+        </sc-if>
+
+        <sc-if value="{{ pg.isSite }}" hint-placeholder-val="{{ false }}">
+          <div style="max-width:760px">
+            <sc-if value="{{ siteView }}">
+              <div style="display:grid;grid-template-columns:180px minmax(0,1fr);border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
+                <sc-for list="{{ pg.site }}" as="f">
+                  <div style="padding:10px 14px;color:#56627F;border-bottom:1px solid #E7ECF4;background:#FFFFFF">{{ f.label }}</div>
+                  <div style="padding:10px 14px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;color:{{ f.color }};word-break:break-word">{{ f.value }}</div>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
+                <sc-if value="{{ canEdit }}"><button onClick="{{ editSite }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-pencil-simple"></i>Edit site details</button></sc-if>
+                <sc-if value="{{ pg.hasDrive }}"><a href="{{ pg.driveUrl }}" target="_blank" style="font-size:13.5px;display:inline-flex;gap:4px;align-items:center"><i aria-hidden="true" class="ph ph-folder-simple"></i>Open shared Drive folder</a></sc-if>
+              </div>
+            </sc-if>
+            <sc-if value="{{ siteEdit }}">
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+                <sc-for list="{{ sd.fields }}" as="f">
+                  <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">{{ f.label }}<input value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px"></label>
+                </sc-for>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:14px">
+                <button onClick="{{ cancelSite }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;white-space:nowrap;flex:none">Cancel</button>
+                <button onClick="{{ saveSite }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Save changes</button>
+              </div>
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ pg.isHistory }}" hint-placeholder-val="{{ false }}">
+          <sc-if value="{{ pg.noHistory }}"><div style="color:#56627F;padding:16px 0">No changes recorded yet.</div></sc-if>
+          <div style="display:flex;flex-direction:column">
+            <sc-for list="{{ pg.history }}" as="h">
+              <div style="display:grid;grid-template-columns:130px 130px minmax(0,1fr);gap:12px;padding:10px 0;border-bottom:1px solid #E7ECF4">
+                <div style="color:#56627F;font-size:13px">{{ h.when }}</div>
+                <div style="font-size:13.5px">{{ h.who }}</div>
+                <div><div><span style="color:#46526F">{{ h.what }}</span> {{ h.change }}</div><sc-if value="{{ h.hasNote }}"><div style="font-size:13px;color:#56627F;margin-top:2px">{{ h.note }}</div></sc-if></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+      </div>
+    </sc-if>
+
+    <!-- NEW PROGRAM WIZARD -->
+    <sc-if value="{{ isNew }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="New Program" style="padding:28px 32px 60px;max-width:960px">
+        <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">New launch</div>
+        <h1 style="font-size:26px;margin:2px 0 18px">Set up a program</h1>
+        <div style="display:flex;gap:6px;margin-bottom:24px;flex-wrap:wrap">
+          <sc-for list="{{ w.steps }}" as="st">
+            <div style="display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-radius:20px;border:1px solid {{ st.border }};color:{{ st.fg }};font-size:13.5px"><span style="width:20px;height:20px;border-radius:50%;display:grid;place-items:center;font-size:12px;background:{{ st.dotBg }};color:{{ st.dotFg }}">{{ st.n }}</span>{{ st.label }}</div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ w.is1 }}">
+          <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr);gap:12px;margin-bottom:22px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Program name<input value="{{ w.name }}" onChange="{{ w.on.name }}" placeholder="e.g. WSU Swim Safely Series" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Location<input value="{{ w.location }}" onChange="{{ w.on.location }}" placeholder="Pool, city, state" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Day 1 (start date)<input type="date" value="{{ w.day1 }}" onChange="{{ w.on.day1 }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 10px;font-size:15px"></label>
+          </div>
+          <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F;margin-bottom:8px">Site-type profile</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
+            <sc-for list="{{ w.types }}" as="ty" hint-placeholder-count="4">
+              <button onClick="{{ ty.pick }}" aria-pressed="{{ ty.selected }}" style="text-align:left;background:{{ ty.bg }};border:1px solid {{ ty.border }};border-radius:8px;padding:12px;color:#14213D;cursor:pointer;display:flex;flex-direction:column;gap:6px">
+                <div style="display:flex;justify-content:space-between;align-items:center"><span style="font-weight:500">{{ ty.name }}</span><span style="font-size:12px;color:#56627F">{{ ty.code }}</span></div>
+                <div style="font-size:13px;color:#46526F;text-wrap:pretty">{{ ty.desc }}</div>
+                <div style="font-size:12.5px;color:#1F3A9E">{{ ty.count }} tasks</div>
+              </button>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ w.is2 }}">
+          <div style="color:#46526F;margin-bottom:14px">Location-specific details. Leave blank if unknown — the partner can fill them in from their portal.</div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+            <sc-for list="{{ w.siteFields }}" as="f">
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">{{ f.label }}<input value="{{ f.value }}" onChange="{{ f.onChange }}" placeholder="{{ f.ph }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"></label>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ w.is3 }}">
+          <div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline;margin-bottom:6px">
+            <div style="font-size:16px;font-weight:500">{{ w.draftTitle }}</div>
+            <div style="color:#46526F;font-size:13.5px">{{ w.draftMeta }}</div>
+          </div>
+          <div style="color:#56627F;font-size:13.5px;margin-bottom:12px">Draft — uncheck tasks that don't apply or adjust dates before creating. Nothing is saved until you create the program.</div>
+          <sc-if value="{{ w.hasPast }}"><div style="padding:9px 12px;border:1px solid #E3B77A;background:#FFF6E8;border-radius:8px;color:#7A3E00;font-size:13.5px;margin-bottom:14px;display:flex;gap:8px;align-items:center"><i aria-hidden="true" class="ph ph-warning"></i>{{ w.pastLabel }}</div></sc-if>
+          <sc-for list="{{ w.phases }}" as="ph">
+            <section style="margin-bottom:16px">
+              <h2 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px;color:#2E3A59">{{ ph.label }}</h2>
+              <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
+                <sc-for list="{{ ph.rows }}" as="r">
+                  <div style="display:grid;grid-template-columns:28px minmax(0,1fr) 170px 150px;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;opacity:{{ r.opacity }}">
+                    <input type="checkbox" aria-label="{{ r.incLabel }}" checked="{{ r.include }}" onChange="{{ r.onToggle }}" style="accent-color:#2340A8;width:15px;height:15px">
+                    <div style="min-width:0"><div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div><div style="font-size:12.5px;color:#56627F">{{ r.timing }}</div></div>
+                    <div style="font-size:13px;color:{{ r.ownerColor }}">{{ r.owner }}</div>
+                    <input type="date" aria-label="{{ r.dueAria }}" value="{{ r.due }}" onChange="{{ r.onDue }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:4px 6px;font-size:13px">
+                  </div>
+                </sc-for>
+              </div>
+            </section>
+          </sc-for>
+        </sc-if>
+
+        <div style="display:flex;gap:8px;margin-top:24px;align-items:center">
+          <sc-if value="{{ w.canBack }}"><button onClick="{{ w.back }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap;flex:none">Back</button></sc-if>
+          <button onClick="{{ w.next }}" disabled="{{ w.nextDisabled }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:500;cursor:pointer;opacity:{{ w.nextOpacity }};white-space:nowrap;flex:none" style-hover="background:#E4ECFC">{{ w.nextLabel }}</button>
+          <span style="font-size:13px;color:#56627F">{{ w.hint }}</span>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- TEMPLATE EDITOR -->
+    <sc-if value="{{ isTemplates }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Program Types" style="padding:28px 32px 60px;max-width:1100px">
+        <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Admin · starting checklists</div>
+        <h1 style="font-size:26px;margin:2px 0 6px">Program types</h1>
+        <p style="color:#2E3A59;margin:0 0 14px;max-width:720px;font-size:15px;text-wrap:pretty">Each program type is a ready-made checklist. When someone creates a new program, NMU Launch copies the checklist for its type and sets every due date by counting from the program's Day 1.</p>
+        <div style="display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border:1px solid #9DB4EC;background:#F2F6FD;border-radius:10px;margin-bottom:26px;max-width:760px">
+          <i aria-hidden="true" class="ph ph-info" style="font-size:18px;color:#1F3A9E;margin-top:1px"></i>
+          <div style="font-size:14px;color:#14213D;text-wrap:pretty">Changes here only affect <strong>programs created afterward</strong>. Programs already underway keep their own task lists — edit those from the program's timeline.</div>
+        </div>
+
+        <h2 style="font-size:17px;margin:0 0 10px">1. Choose a program type</h2>
+        <div role="group" aria-label="Program type" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;margin-bottom:30px">
+          <sc-for list="{{ tp.types }}" as="ty" hint-placeholder-count="4">
+            <button onClick="{{ ty.pick }}" aria-pressed="{{ ty.selected }}" style="text-align:left;background:{{ ty.bg }};border:2px solid {{ ty.border }};border-radius:10px;padding:14px;color:#14213D;cursor:pointer;display:flex;flex-direction:column;gap:6px" style-hover="border-color:#2340A8">
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-weight:700;font-size:15px">{{ ty.name }}</span><sc-if value="{{ ty.selected }}"><i aria-hidden="true" class="ph-fill ph-check-circle" style="color:#2340A8;font-size:18px"></i></sc-if></div>
+              <div style="font-size:13.5px;color:#46526F;text-wrap:pretty">{{ ty.desc }}</div>
+              <div style="font-size:13.5px;color:#1F3A9E;font-weight:600">{{ ty.meta }}</div>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin-bottom:12px">
+          <div>
+            <h2 style="font-size:17px;margin:0 0 2px">2. Review the {{ tp.selName }} checklist</h2>
+            <div style="font-size:14px;color:#46526F">{{ tp.summary }}</div>
+          </div>
+          <button onClick="{{ tp.add }}" style="background:#2340A8;border:1px solid #2340A8;color:#FFFFFF;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#142B7A"><i aria-hidden="true" class="ph ph-plus"></i>Add a task</button>
+        </div>
+        <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:16px;padding:12px 14px;background:#FFFFFF;border:1px solid #D5DCE8;border-radius:10px">
+          <label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:#2E3A59;flex:1;min-width:220px">Search tasks<input type="search" value="{{ tp.query }}" onChange="{{ tp.onQuery }}" placeholder="e.g. waiver, shipping, volunteers" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;font-weight:400"></label>
+          <label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:#2E3A59">Example Day 1 for previewing dates<input type="date" value="{{ tp.day1 }}" onChange="{{ tp.onDay1 }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;font-weight:400"></label>
+          <button onClick="{{ tp.toggleAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#E4ECFC">{{ tp.allLabel }}</button>
+        </div>
+        <sc-if value="{{ tp.noMatch }}"><div style="padding:20px;border:1px dashed #A9B5CC;border-radius:8px;color:#46526F;margin-bottom:16px">No tasks match "{{ tp.query }}".</div></sc-if>
+
+        <sc-for list="{{ tp.phases }}" as="ph" hint-placeholder-count="4">
+          <section style="margin-bottom:10px;border:1px solid #D5DCE8;border-radius:10px;background:#FFFFFF;overflow:hidden">
+            <h3 style="margin:0">
+              <button onClick="{{ ph.toggle }}" aria-expanded="{{ ph.open }}" style="width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;background:transparent;border:0;cursor:pointer;color:#14213D;text-align:left;font-size:15px" style-hover="background:#F2F6FD">
+                <i aria-hidden="true" class="{{ ph.chevron }}" style="font-size:14px;color:#46526F"></i>
+                <span style="font-weight:700">{{ ph.label }}</span>
+                <span style="font-size:13.5px;color:#56627F;font-weight:400">{{ ph.countLabel }}</span>
+                <span style="margin-left:auto;font-size:13px;color:#56627F;font-weight:400">{{ ph.range }}</span>
+              </button>
+            </h3>
+            <sc-if value="{{ ph.open }}">
+              <ul style="list-style:none;margin:0;padding:0;border-top:1px solid #E7ECF4">
+                <sc-for list="{{ ph.rows }}" as="r">
+                  <li style="display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,200px) minmax(130px,170px) auto;gap:14px;align-items:center;padding:11px 14px;border-bottom:1px solid #E7ECF4">
+                    <div style="min-width:0">
+                      <div style="font-weight:600;text-wrap:pretty">{{ r.name }}</div>
+                      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                        <sc-if value="{{ r.partner }}"><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#FFF1DE;color:#7A3E00">Partner site does this</span></sc-if>
+                        <sc-if value="{{ r.onlyHere }}"><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#E4ECFC;color:#1A3A8F">Only in {{ tp.selName }}</span></sc-if>
+                        <sc-if value="{{ r.hasWaits }}"><span style="font-size:12px;color:#46526F;display:inline-flex;gap:4px;align-items:center"><i aria-hidden="true" class="ph ph-link"></i>Waits on: {{ r.waits }}</span></sc-if>
+                      </div>
+                    </div>
+                    <div><div style="font-size:14px">{{ r.when }}</div><div style="font-size:13px;color:#56627F">{{ r.example }}</div></div>
+                    <div><div style="font-size:14px">{{ r.role }}</div><sc-if value="{{ r.hasSupport }}"><div style="font-size:13px;color:#56627F">with {{ r.support }}</div></sc-if></div>
+                    <button onClick="{{ r.edit }}" aria-label="{{ r.editLabel }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none;padding:6px 12px" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-pencil-simple"></i>Edit</button>
+                  </li>
+                </sc-for>
+              </ul>
+            </sc-if>
+          </section>
+        </sc-for>
+
+        <sc-if value="{{ tp.hasExcluded }}">
+          <section style="margin-top:28px">
+            <h2 style="font-size:17px;margin:0 0 4px">3. Optional: add tasks used by other types</h2>
+            <p style="font-size:14px;color:#46526F;margin:0 0 10px">These tasks exist in other checklists but not in {{ tp.selName }}.</p>
+            <button onClick="{{ tp.toggleOther }}" aria-expanded="{{ tp.showOther }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#E4ECFC"><i aria-hidden="true" class="{{ tp.otherIcon }}"></i>{{ tp.otherLabel }}</button>
+            <sc-if value="{{ tp.showOther }}">
+              <ul style="list-style:none;margin:12px 0 0;padding:0;border:1px solid #D5DCE8;border-radius:10px;background:#FFFFFF;overflow:hidden">
+                <sc-for list="{{ tp.excluded }}" as="x">
+                  <li style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #E7ECF4;flex-wrap:wrap">
+                    <div style="min-width:0"><div style="font-weight:600">{{ x.name }}</div><div style="font-size:13px;color:#56627F">{{ x.when }} · used by {{ x.usedBy }}</div></div>
+                    <button onClick="{{ x.add }}" aria-label="{{ x.addLabel }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none;padding:6px 12px" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-plus"></i>Add to {{ tp.selName }}</button>
+                  </li>
+                </sc-for>
+              </ul>
+            </sc-if>
+          </section>
+        </sc-if>
+      </div>
+
+      <sc-if value="{{ hasTplEdit }}">
+        <div style="position:fixed;inset:0;background:rgba(20,33,61,.5);z-index:50;display:grid;place-items:center;padding:20px">
+          <div role="dialog" aria-modal="true" aria-labelledby="te-title" style="width:min(640px,100%);max-height:90vh;overflow:auto;background:#FFFFFF;box-shadow:0 24px 48px -12px rgba(20,33,61,.28);border-radius:14px;padding:22px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px">
+            <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+              <div><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">{{ te.kicker }}</div><h2 id="te-title" style="font-size:20px;margin:4px 0 0">{{ te.title }}</h2></div>
+              <button onClick="{{ te.cancel }}" aria-label="Close without saving" style="background:transparent;border:0;color:#46526F;font-size:18px;cursor:pointer;padding:6px;border-radius:6px"><i aria-hidden="true" class="ph ph-x"></i></button>
+            </div>
+            <label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:#2E3A59">What needs to happen?<input id="te-name" value="{{ te.name }}" onChange="{{ te.onName }}" placeholder="e.g. Confirm parking for instructors" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;font-weight:400"></label>
+            <fieldset style="border:0;padding:0;margin:0;display:flex;flex-direction:column;gap:6px">
+              <legend style="font-size:13.5px;font-weight:600;color:#2E3A59;padding:0;margin-bottom:6px">When is it due?</legend>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <sc-if value="{{ te.notDuring }}">
+                  <input type="number" min="1" aria-label="Amount" value="{{ te.n }}" onChange="{{ te.onN }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;width:80px">
+                  <select aria-label="Unit" key="{{ te.unitKey }}" value="{{ te.unit }}" onChange="{{ te.onUnit }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px"><option value="days">days</option><option value="weeks">weeks</option><option value="months">months</option></select>
+                </sc-if>
+                <select aria-label="Relative to" key="{{ te.dirKey }}" value="{{ te.dir }}" onChange="{{ te.onDir }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px"><option value="before">before Day 1</option><option value="during">during the program, on day…</option><option value="after">after the program ends</option></select>
+                <sc-if value="{{ te.isDuring }}">
+                  <select aria-label="Program day" key="{{ te.dayKey }}" value="{{ te.n }}" onChange="{{ te.onN }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px"><option value="1">Day 1</option><option value="2">Day 2</option><option value="3">Day 3</option><option value="4">Day 4</option><option value="5">Day 5</option></select>
+                </sc-if>
+              </div>
+              <div style="font-size:14px;color:#1A3A8F;background:#F2F6FD;border-radius:8px;padding:8px 10px">{{ te.preview }}</div>
+            </fieldset>
+            <label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:#2E3A59">Who usually owns it?<select key="{{ te.roleKey }}" value="{{ te.role }}" onChange="{{ te.onRole }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;font-weight:400"><sc-for list="{{ roles }}" as="ro"><option>{{ ro }}</option></sc-for></select><span style="font-size:13px;font-weight:400;color:#56627F">If exactly one active person has this role, they're assigned automatically.</span></label>
+            <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer"><input type="checkbox" checked="{{ te.partnerOwned }}" onChange="{{ te.onPartner }}" style="accent-color:#2340A8;width:18px;height:18px;margin:1px 0 0"><span><strong>The partner site does this task</strong><br><span style="color:#56627F;font-size:13px">It appears in the partner portal, and the site contact gets reminders.</span></span></label>
+            <fieldset style="border:0;padding:0;margin:0">
+              <legend style="font-size:13.5px;font-weight:600;color:#2E3A59;padding:0;margin-bottom:8px">Include in these program types</legend>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 14px">
+                <sc-for list="{{ te.types }}" as="ty"><label style="display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" checked="{{ ty.on }}" onChange="{{ ty.toggle }}" style="accent-color:#2340A8;width:18px;height:18px">{{ ty.name }}</label></sc-for>
+              </div>
+            </fieldset>
+            <div>
+              <div id="te-deps-label" style="font-size:13.5px;font-weight:600;color:#2E3A59;margin-bottom:6px">Must wait for (optional)</div>
+              <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px">
+                <sc-for list="{{ te.deps }}" as="d"><span style="display:inline-flex;gap:6px;align-items:center;font-size:13.5px;padding:4px 6px 4px 10px;border-radius:999px;background:#E7ECF4">{{ d.name }}<button onClick="{{ d.remove }}" aria-label="{{ d.removeLabel }}" style="background:transparent;border:0;color:#2E3A59;cursor:pointer;padding:2px 4px;border-radius:999px;font-size:14px"><i aria-hidden="true" class="ph ph-x"></i></button></span></sc-for>
+                <sc-if value="{{ te.noDeps }}"><span style="font-size:13.5px;color:#56627F">Nothing — this task can start any time.</span></sc-if>
+              </div>
+              <select aria-labelledby="te-deps-label" key="{{ te.depKey }}" value="" onChange="{{ te.onAddDep }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;width:100%"><option value="">Add a task it waits for…</option><sc-for list="{{ te.depOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select>
+            </div>
+            <sc-if value="{{ te.hasError }}"><div role="alert" style="font-size:14px;color:#962B1E;background:#FBE4E0;border-radius:8px;padding:8px 10px">{{ te.error }}</div></sc-if>
+            <div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap;padding-top:4px;border-top:1px solid #E7ECF4">
+              <div><sc-if value="{{ te.canRemove }}"><button onClick="{{ te.remove }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none;color:#962B1E;margin-top:12px" style-hover="background:#FBE4E0"><i aria-hidden="true" class="ph ph-minus-circle"></i>Remove from {{ tp.selName }}</button></sc-if></div>
+              <div style="display:flex;gap:8px;margin-top:12px">
+                <button onClick="{{ te.cancel }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none;color:#2E3A59" style-hover="background:#E7ECF4">Cancel</button>
+                <button onClick="{{ te.save }}" style="background:#2340A8;border:1px solid #2340A8;color:#FFFFFF;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#142B7A">{{ te.saveLabel }}</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+    </sc-if>
+
+    <!-- CHANGE HISTORY -->
+    <sc-if value="{{ isHistory }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Change History" style="padding:28px 32px 60px;max-width:1100px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:18px">
+          <div>
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Record</div>
+            <h1 style="font-size:26px;margin:2px 0 4px">Change history</h1>
+            <div style="color:#46526F">Dates, statuses, owners and notes, across every launch.</div>
+          </div>
+          <select aria-label="Filter by program" key="{{ histProgram }}" value="{{ histProgram }}" onChange="{{ onHistProgram }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px">
+            <option value="all">All programs</option>
+            <sc-for list="{{ progOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for>
+          </select>
+        </div>
+        <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:auto">
+          <div style="display:grid;grid-template-columns:130px 120px minmax(160px,.8fr) minmax(260px,1.4fr);gap:12px;padding:8px 14px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#56627F;border-bottom:1px solid #8792AC;min-width:760px"><div>When</div><div>Who</div><div>Program</div><div>Change</div></div>
+          <sc-for list="{{ hist }}" as="h" hint-placeholder-count="5">
+            <div style="display:grid;grid-template-columns:130px 120px minmax(160px,.8fr) minmax(260px,1.4fr);gap:12px;padding:10px 14px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;min-width:760px">
+              <div style="color:#56627F;font-size:13px">{{ h.when }}</div>
+              <div style="font-size:13.5px">{{ h.who }}</div>
+              <div style="font-size:13.5px;color:#2E3A59">{{ h.program }}</div>
+              <div><div><span style="color:#46526F">{{ h.what }}</span> {{ h.change }}</div><sc-if value="{{ h.hasNote }}"><div style="font-size:13px;color:#56627F;margin-top:2px">{{ h.note }}</div></sc-if></div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- PARTNER PORTAL -->
+    <sc-if value="{{ isPortal }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Partner Portal" style="padding:28px 32px 60px;max-width:980px">
+        <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Partner portal · {{ po.org }}</div>
+        <h1 style="font-size:26px;margin:2px 0 4px">{{ po.name }}</h1>
+        <div style="color:#46526F;margin-bottom:20px">Day 1 is {{ po.day1 }} · {{ po.countdown }}. You see only the tasks your site owns.</div>
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px;align-items:start">
+          <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
+            <sc-for list="{{ po.tasks }}" as="t">
+              <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) 110px 124px;gap:12px;align-items:center;padding:11px 12px;border-bottom:1px solid #E7ECF4;cursor:pointer;background:#FFFFFF" style-hover="background:#F2F6FD">
+                <div style="min-width:0"><button onClick="{{ t.open }}" style="background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;flex:none">{{ t.name }}</button><div style="font-size:13px;color:#56627F">{{ t.timing }}</div></div>
+                <div><div style="font-size:13.5px">{{ t.dueLabel }}</div><div style="font-size:12.5px;color:{{ t.relColor }}">{{ t.relLabel }}</div></div>
+                <select value="{{ t.status }}" aria-label="{{ t.statusLabel }}" onClick="{{ stop }}" onChange="{{ t.onStatus }}" style="border:0;border-radius:4px;padding:4px 6px;font-size:13px;background:{{ t.statusBg }};color:{{ t.statusFg }};cursor:pointer"><option>Not started</option><option>In progress</option><option>Blocked</option><option>Done</option></select>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:10px;padding:14px;border:1px solid #E7ECF4;border-radius:8px;background:#FFFFFF">
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Your NMU contact</div>
+            <div><div style="font-weight:500">{{ po.pm }}</div><div style="font-size:13px;color:#46526F">{{ po.pmEmail }}</div></div>
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F;margin-top:6px">Site on file</div>
+            <div style="font-size:13.5px;color:#2E3A59">{{ po.shipping }}</div>
+            <div style="font-size:13.5px;color:#2E3A59">{{ po.hours }}</div>
+            <div style="font-size:13px;color:#56627F">Email reminders arrive 7 days before and on each due date.</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <!-- ADMIN -->
+    <sc-if value="{{ isAdmin }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Admin" style="padding:28px 32px 60px;max-width:1100px">
+        <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Admin</div>
+        <h1 style="font-size:26px;margin:2px 0 4px">Users &amp; data</h1>
+        <div style="color:#46526F;margin-bottom:18px">Add staff and partner contacts, set roles, and check the data connection.</div>
+        <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:auto;margin-bottom:12px">
+          <div style="display:grid;grid-template-columns:minmax(140px,1fr) minmax(180px,1fr) 190px 200px 90px;gap:10px;padding:8px 12px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#56627F;border-bottom:1px solid #8792AC;min-width:860px"><div>Name</div><div>Email</div><div>Role</div><div>Partner program</div><div>Access</div></div>
+          <sc-for list="{{ ad.users }}" as="u" hint-placeholder-count="6">
+            <div style="display:grid;grid-template-columns:minmax(140px,1fr) minmax(180px,1fr) 190px 200px 90px;gap:10px;align-items:center;padding:7px 12px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;opacity:{{ u.opacity }};min-width:860px">
+              <div style="font-weight:500">{{ u.name }}</div>
+              <div style="font-size:13.5px;color:#46526F">{{ u.email }}</div>
+              <select aria-label="{{ u.roleAria }}" key="{{ u.roleKey }}" value="{{ u.role }}" onChange="{{ u.onRole }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:5px 6px;font-size:13.5px"><sc-for list="{{ roles }}" as="ro"><option>{{ ro }}</option></sc-for></select>
+              <div>
+                <sc-if value="{{ u.isPartner }}"><select aria-label="{{ u.progAria }}" key="{{ u.progKey }}" value="{{ u.programId }}" onChange="{{ u.onProgram }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:5px 6px;font-size:13.5px;width:100%"><option value="">— choose —</option><sc-for list="{{ progOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></sc-if>
+                <sc-if value="{{ u.notPartner }}"><span style="font-size:13px;color:#5E6987">All programs</span></sc-if>
+              </div>
+              <button onClick="{{ u.toggle }}" disabled="{{ u.isMe }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:6px;padding:4px 8px;font-size:13px;cursor:pointer;white-space:nowrap;flex:none">{{ u.activeLabel }}</button>
+            </div>
+          </sc-for>
+          <div style="display:grid;grid-template-columns:minmax(140px,1fr) minmax(180px,1fr) 190px 200px 90px;gap:10px;align-items:center;padding:8px 12px;min-width:860px">
+            <input value="{{ nu.name }}" onChange="{{ nu.onName }}" placeholder="New user name" aria-label="New user name" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px">
+            <input value="{{ nu.email }}" onChange="{{ nu.onEmail }}" placeholder="email@nmu.org" aria-label="New user email" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px">
+            <select aria-label="New user role" key="{{ nu.role }}" value="{{ nu.role }}" onChange="{{ nu.onRole }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:5px 6px;font-size:13.5px"><sc-for list="{{ roles }}" as="ro"><option>{{ ro }}</option></sc-for></select>
+            <div style="font-size:13px;color:{{ nu.msgColor }}">{{ nu.msg }}</div>
+            <button onClick="{{ nu.add }}" disabled="{{ nu.invalid }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:6px;padding:5px 8px;font-size:13px;font-weight:500;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Add user</button>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:28px">
+          <div style="padding:16px;border:1px solid #E7ECF4;border-radius:8px;background:#FFFFFF;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:500;font-size:15px">Airtable connection</div><span style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:#2E3A59"><span style="width:7px;height:7px;border-radius:50%;background:{{ modeDot }}"></span>{{ modeLabel }}</span></div>
+            <div style="font-size:13.5px;color:#46526F;text-wrap:pretty">{{ ad.modeHelp }}</div>
+            <div style="font-family:ui-monospace,Menlo,monospace;font-size:12.5px;color:#46526F;padding:8px 10px;background:#FBF8F1;border-radius:6px;line-height:1.6">AIRTABLE_TOKEN · AIRTABLE_BASE_ID → server env vars<br>window.NMU_AIRTABLE = { proxyUrl: '/api/airtable' }</div>
+            <sc-if value="{{ ad.isMock }}"><button onClick="{{ ad.reset }}" style="align-self:flex-start;background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#E7ECF4">Reset demo data</button></sc-if>
+          </div>
+          <div style="padding:16px;border:1px solid #E7ECF4;border-radius:8px;background:#FFFFFF">
+            <div style="font-weight:500;font-size:15px;margin-bottom:10px">Tables</div>
+            <sc-for list="{{ ad.tables }}" as="tb">
+              <div style="display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid #E7ECF4;font-size:13.5px"><span style="font-family:ui-monospace,Menlo,monospace;color:#2E3A59">{{ tb.table }}</span><span style="color:#56627F">{{ tb.count }} records · {{ tb.fields }} fields</span></div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+
+  <!-- TASK DRAWER -->
+  <sc-if value="{{ hasTask }}" hint-placeholder-val="{{ false }}">
+    <div aria-hidden="true" onClick="{{ closeTask }}" style="position:fixed;inset:0;background:rgba(20,33,61,.45);z-index:40"></div>
+    <aside role="dialog" aria-modal="true" aria-labelledby="drawer-title" style="position:fixed;top:0;right:0;bottom:0;width:min(460px,100vw);background:#FFFFFF;box-shadow:0 24px 48px -12px rgba(20,33,61,.28);z-index:41;overflow:auto;padding:20px 22px 40px;box-sizing:border-box;display:flex;flex-direction:column;gap:18px">
+      <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
+        <div style="min-width:0">
+          <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">{{ dr.kicker }}</div>
+          <h2 id="drawer-title" style="font-size:19px;margin:4px 0 0;text-wrap:pretty">{{ dr.name }}</h2>
+        </div>
+        <button id="drawer-close" aria-label="Close task details" onClick="{{ closeTask }}" style="background:transparent;border:0;color:#46526F;font-size:18px;cursor:pointer;padding:6px;border-radius:6px;white-space:nowrap;flex:none"><i aria-hidden="true" class="ph ph-x"></i></button>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <sc-for list="{{ dr.tags }}" as="tg"><span style="font-size:12px;padding:2px 7px;border-radius:4px;border:1px solid #A9B5CC;color:#2E3A59">{{ tg }}</span></sc-for>
+      </div>
+      <div>
+        <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Status</div>
+        <div role="group" aria-label="Status" style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+          <sc-for list="{{ dr.statusOpts }}" as="so"><button onClick="{{ so.set }}" aria-pressed="{{ so.selected }}" disabled="{{ dr.lockStatus }}" style="border:1px solid {{ so.border }};background:{{ so.bg }};color:{{ so.fg }};border-radius:6px;padding:6px 4px;font-size:13px;cursor:pointer;white-space:nowrap;flex:none">{{ so.label }}</button></sc-for>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Due date<input type="date" value="{{ dr.due }}" onChange="{{ dr.onDue }}" disabled="{{ dr.lockPlan }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"></label>
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Owner · {{ dr.role }}<select key="{{ dr.ownerKey }}" value="{{ dr.ownerId }}" onChange="{{ dr.onOwner }}" disabled="{{ dr.lockPlan }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"><option value="">Unassigned</option><sc-for list="{{ dr.ownerOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select></label>
+      </div>
+      <div style="font-size:13px;color:#56627F;display:flex;gap:6px;align-items:flex-start"><i aria-hidden="true" class="ph ph-envelope-simple" style="margin-top:2px"></i><span>{{ dr.reminder }}</span></div>
+      <sc-if value="{{ dr.hasDeps }}">
+        <div>
+          <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Depends on</div>
+          <sc-for list="{{ dr.deps }}" as="d"><div onClick="{{ d.open }}" style="display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border:1px solid #8792AC;border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:13.5px" style-hover="background:#E7ECF4"><span>{{ d.name }}</span><span style="font-size:12px;padding:1px 6px;border-radius:4px;background:{{ d.bg }};color:{{ d.fg }};flex:none">{{ d.status }}</span></div></sc-for>
+        </div>
+      </sc-if>
+      <sc-if value="{{ dr.hasBlocks }}">
+        <div>
+          <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Unblocks</div>
+          <sc-for list="{{ dr.blocks }}" as="d"><div onClick="{{ d.open }}" style="display:flex;justify-content:space-between;gap:8px;padding:7px 10px;border:1px solid #8792AC;border-radius:6px;margin-bottom:4px;cursor:pointer;font-size:13.5px" style-hover="background:#E7ECF4"><span>{{ d.name }}</span><span style="font-size:12.5px;color:#56627F;flex:none">{{ d.dueLabel }}</span></div></sc-for>
+        </div>
+      </sc-if>
+      <div>
+        <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Notes</div>
+        <sc-for list="{{ dr.notes }}" as="n"><div style="font-size:13.5px;padding:8px 10px;background:#FBF8F1;border-radius:6px;margin-bottom:4px;white-space:pre-wrap">{{ n }}</div></sc-for>
+        <textarea aria-label="Add a note" value="{{ note }}" onChange="{{ onNote }}" placeholder="Add a note — it's saved to the change history" rows="3" style="width:100%;box-sizing:border-box;background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px;font-size:14px;resize:vertical;margin-top:4px"></textarea>
+        <button onClick="{{ addNote }}" disabled="{{ noteEmpty }}" style="display:inline-block;width:auto;margin-top:6px;background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:5px 12px;font-size:13.5px;font-weight:500;cursor:pointer;opacity:{{ noteOpacity }};white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Add note</button>
+      </div>
+      <sc-if value="{{ dr.hasLog }}">
+        <div>
+          <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">History</div>
+          <sc-for list="{{ dr.log }}" as="h"><div style="font-size:13px;padding:5px 0;border-bottom:1px solid #E7ECF4;color:#46526F"><span style="color:#56627F">{{ h.when }} · {{ h.who }}</span> — {{ h.what }} {{ h.change }}</div></sc-for>
+        </div>
+      </sc-if>
+    </aside>
+  </sc-if>
+
+  <!-- RESCHEDULE PREVIEW -->
+  <sc-if value="{{ hasResched }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;inset:0;background:rgba(20,33,61,.5);z-index:50;display:grid;place-items:center;padding:20px">
+      <div role="dialog" aria-modal="true" aria-labelledby="resched-title" style="width:min(820px,100%);max-height:88vh;overflow:auto;background:#FFFFFF;box-shadow:0 24px 48px -12px rgba(20,33,61,.28);border-radius:14px;padding:22px 24px;box-sizing:border-box;display:flex;flex-direction:column;gap:16px">
+        <div>
+          <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Reschedule preview · {{ rs.program }}</div>
+          <h2 id="resched-title" style="font-size:20px;margin:4px 0 0">Move Day 1</h2>
+        </div>
+        <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap">
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Current<div style="padding:7px 0;font-size:15px;color:#14213D">{{ rs.oldLabel }}</div></label>
+          <i aria-hidden="true" class="ph ph-arrow-right" style="padding-bottom:10px;color:#56627F"></i>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">New Day 1<input id="resched-date" type="date" value="{{ rs.newDate }}" onChange="{{ rs.onDate }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:15px"></label>
+          <div style="padding-bottom:8px;font-size:14px;color:#1F3A9E">{{ rs.deltaLabel }}</div>
+        </div>
+        <div style="font-size:13.5px;color:#46526F">{{ rs.summary }}</div>
+        <sc-if value="{{ rs.hasFollow }}">
+          <div style="padding:12px 14px;border:1px solid #9DB4EC;border-radius:8px">
+            <div style="font-size:12.5px;color:#1F3A9E;margin-bottom:6px">Suggested follow-ups — not sent automatically</div>
+            <sc-for list="{{ rs.follow }}" as="f"><div style="font-size:13.5px;padding:3px 0;display:flex;gap:8px"><i aria-hidden="true" class="ph ph-arrow-bend-down-right" style="color:#56627F;margin-top:2px"></i><span>{{ f }}</span></div></sc-for>
+          </div>
+        </sc-if>
+        <sc-if value="{{ rs.hasManual }}">
+          <div>
+            <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Manually edited dates — kept unless you choose to move them</div>
+            <sc-for list="{{ rs.manual }}" as="r"><label style="display:flex;gap:8px;align-items:center;font-size:13.5px;padding:4px 0;cursor:pointer"><input type="checkbox" checked="{{ r.move }}" onChange="{{ r.toggle }}" style="accent-color:#2340A8">{{ r.name }} <span style="color:#56627F">({{ r.oldLabel }})</span></label></sc-for>
+          </div>
+        </sc-if>
+        <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden;max-height:300px;overflow-y:auto">
+          <sc-for list="{{ rs.rows }}" as="r">
+            <div style="display:grid;grid-template-columns:minmax(0,1fr) 80px 20px 80px 110px;gap:8px;align-items:center;padding:6px 12px;border-bottom:1px solid #E7ECF4;font-size:13.5px;opacity:{{ r.opacity }}">
+              <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ r.name }}</div>
+              <div style="color:#56627F">{{ r.oldLabel }}</div>
+              <i aria-hidden="true" class="ph ph-arrow-right" style="color:#5E6987"></i>
+              <div style="color:{{ r.newColor }}">{{ r.newLabel }}</div>
+              <div style="font-size:12.5px;color:{{ r.flagColor }}">{{ r.flag }}</div>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:8px;justify-content:flex-end">
+          <button onClick="{{ closeResched }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap;flex:none">Cancel</button>
+          <button onClick="{{ applyResched }}" disabled="{{ rs.noChange }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;opacity:{{ rs.applyOpacity }};white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Apply &amp; log change</button>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+
+  <div role="status" aria-live="polite" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap">{{ toast }}</div>
+  <sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#14213D;color:#FFFFFF;box-shadow:0 8px 24px -6px rgba(20,33,61,.3);border-radius:8px;padding:9px 16px;font-size:14px;z-index:60;display:flex;gap:8px;align-items:center"><i aria-hidden="true" class="ph ph-check-circle" style="color:#9DC4FF"></i>{{ toast }}</div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+const ST = {
+  'Not started': { bg: '#E7ECF4', fg: '#2E3A59' },
+  'In progress': { bg: '#DCE7FB', fg: '#1A3A8F' },
+  'Blocked': { bg: '#FBE4E0', fg: '#962B1E' },
+  'Done': { bg: '#DDF0E5', fg: '#1A6641' },
+};
+const WARN = '#8A4600';
+const HEALTH = {
+  'On track': ST['Done'], 'Watch': { bg: '#FCF0D4', fg: '#734A00' },
+  'At risk': { bg: '#FDE5D1', fg: '#8A3A00' }, 'Blocked': ST['Blocked'], 'Wrapping up': ST['Not started'],
+};
+const NAV = {
+  mytasks: ['My tasks', 'ph ph-check-square'], programs: ['All programs', 'ph ph-squares-four'], new: ['New program', 'ph ph-plus-circle'],
+  history: ['Change history', 'ph ph-clock-counter-clockwise'], templates: ['Program types', 'ph ph-tree-structure'],
+  admin: ['Users & data', 'ph ph-users-three'], portal: ['Partner portal', 'ph ph-handshake'],
+};
+const ACCESS = {
+  'Program Manager': ['mytasks', 'programs', 'new', 'history', 'templates', 'admin'],
+  'Program Assistant': ['mytasks', 'programs', 'new', 'history'],
+  'Executive Director': ['programs', 'mytasks', 'history', 'templates', 'admin'],
+  'Marketing Director': ['mytasks', 'programs', 'history'],
+  'Operations Director': ['mytasks', 'programs', 'history'],
+  'Grant Writer': ['mytasks', 'programs', 'history'],
+  'Board Member': ['programs', 'history'],
+  'Partner': ['portal'],
+};
+const ACCESS_NOTE = {
+  'Board Member': 'Read-only: all programs and history.',
+  'Partner': 'Partner: own site’s tasks only.',
+  'Program Manager': 'Full access incl. templates & users.',
+  'Executive Director': 'Full access incl. templates & users.',
+};
+const FIELD_LABEL = { status: 'Status', due: 'Due date', ownerId: 'Owner' };
+const SITE_FIELDS = [
+  ['partnerOrg', 'Partner organization', 'e.g. UW Recreation'], ['pocName', 'Point of contact', 'Head coach / aquatics director'],
+  ['pocEmail', 'Contact email', ''], ['pocPhone', 'Contact phone', ''], ['shipping', 'Shipping address', 'Where equipment ships'],
+  ['hours', 'Pool hours', 'e.g. Tue/Thu 6–8 PM'], ['instructors', 'Lead instructor(s)', ''], ['driveUrl', 'Shared Drive folder', 'https://drive.google.com/…'],
+];
+
+const UNIT = { days: 1, weeks: 7, months: 30 };
+const splitOff = o => {
+  if (o >= 0 && o <= 4) return { dir: 'during', n: o + 1, unit: 'days' };
+  const dir = o < 0 ? 'before' : 'after', a = o < 0 ? -o : o - 4;
+  const unit = a >= 60 && a % 30 === 0 ? 'months' : a >= 7 && a % 7 === 0 ? 'weeks' : 'days';
+  return { dir, n: a / UNIT[unit], unit };
+};
+const joinOff = d => d.dir === 'during' ? Math.min(5, Math.max(1, d.n)) - 1 : d.dir === 'before' ? -d.n * UNIT[d.unit] : 4 + d.n * UNIT[d.unit];
+const whenText = o => {
+  const x = splitOff(o);
+  if (x.dir === 'during') return `Program day ${x.n}`;
+  const u = x.n === 1 ? x.unit.slice(0, -1) : x.unit;
+  return x.dir === 'before' ? `${x.n} ${u} before Day 1` : `${x.n} ${u} after the program ends`;
+};
+
+class Component extends DCLogic {
+  state = { ready: false, db: null, myProgram: 'all', tplOpen: {}, tplQuery: '', tplDay1: null, tplEdit: null, tplShowOther: false, expanded: {}, phaseOpen: {}, timelineAll: {}, view: 'mytasks', userId: 'usr_jordan', programId: null, tab: 'timeline', taskId: null, myScope: 'open', histProgram: 'all', tplType: 'typ_SSS', wiz: null, resched: null, siteDraft: null, addTask: null, newUser: { name: '', email: '', role: 'Program Assistant' }, note: '', toast: '' };
+
+  async componentDidMount() {
+    while (!window.NMUData) await new Promise(r => setTimeout(r, 30));
+    const m = window.NMUData;
+    this.m = m; this.api = m.createAdapter();
+    const db = await this.api.listAll();
+    let ui = {}; try { ui = JSON.parse(localStorage.getItem('nmu-launch-ui-v2') || '{}'); } catch (e) { }
+    this.setState({ ready: true, db, ...ui });
+    this._onKey = e => { if (e.key !== 'Escape') return; if (this.state.tplEdit) this.setState({ tplEdit: null }); else if (this.state.resched) this.setState({ resched: null }); else if (this.state.taskId) this.setState({ taskId: null }); };
+    window.addEventListener('keydown', this._onKey);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this._onKey); }
+  // Move focus into dialogs on open and back to the trigger on close (tracked manually; runs after paint).
+  syncFocus() {
+    const pairs = [['taskId', 'drawer-close'], ['tplEdit', 'te-name'], ['resched', 'resched-date']];
+    this._fprev = this._fprev || {}; this._fret = this._fret || {};
+    for (const [k, id] of pairs) {
+      const was = !!this._fprev[k], now = !!this.state[k];
+      if (!was && now) {
+        this._fret[k] = document.activeElement;
+        let tries = 0;
+        const tick = () => { const el = document.getElementById(id); if (el) el.focus(); else if (tries++ < 20) requestAnimationFrame(tick); };
+        requestAnimationFrame(tick);
+      } else if (was && !now) {
+        const el = this._fret[k]; this._fret[k] = null;
+        if (el && el.isConnected) requestAnimationFrame(() => el.focus());
+      }
+      this._fprev[k] = now;
+    }
+  }
+  componentDidUpdate(pp, ps) {
+    if (!this.state.ready) return;
+    const { view, userId, programId, tab, myProgram } = this.state;
+    localStorage.setItem('nmu-launch-ui-v2', JSON.stringify({ view, userId, programId, tab, myProgram }));
+  }
+  go(view, extra = {}) { this.setState({ view, taskId: null, tplEdit: null, siteDraft: null, addTask: null, ...extra }); window.scrollTo(0, 0); setTimeout(() => document.getElementById('main')?.focus({ preventScroll: true }), 0); }
+  flash(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2600); }
+  fail(e) { this.flash('Save failed — ' + e.message); }
+  local(table, id, p) { this.setState(s => ({ db: { ...s.db, [table]: s.db[table].map(r => r.id === id ? { ...r, ...p } : r) } })); }
+  patch(table, id, p) { this.local(table, id, p); this.api.update(table, id, p).catch(e => this.fail(e)); }
+  patchMany(table, list) {
+    const mp = Object.fromEntries(list.map(x => [x.id, x.patch]));
+    this.setState(s => ({ db: { ...s.db, [table]: s.db[table].map(r => mp[r.id] ? { ...r, ...mp[r.id] } : r) } }));
+    this.api.updateMany(table, list).catch(e => this.fail(e));
+  }
+  insert(table, recs) {
+    this.setState(s => ({ db: { ...s.db, [table]: [...s.db[table], ...recs] } }));
+    return this.api.createMany(table, recs).then(() => { if (this.api.mode !== 'mock') this.reload(); }).catch(e => this.fail(e));
+  }
+  async reload() { const db = await this.api.listAll(); const fix = id => (id && this.api.resolveId ? this.api.resolveId(id) : id); this.setState({ db, programId: fix(this.state.programId), taskId: fix(this.state.taskId) }); }
+  log(e) { this.insert('ChangeLog', [{ id: this.m.rid('log'), at: new Date().toISOString(), userId: (this.state.db.Users.find(u => u.id === this.state.userId) || this.state.db.Users[0] || {}).id || '', programId: '', taskId: '', field: '', from: '', to: '', note: '', ...e }]); }
+  uname(id) { const u = this.state.db.Users.find(x => x.id === id); return u ? u.name : 'Unassigned'; }
+  setTask(t, field, val) {
+    if (t[field] === val) return;
+    const p = { [field]: val }; if (field === 'due') p.manualDate = true;
+    this.patch('Tasks', t.id, p);
+    const f = field === 'ownerId' ? (x => this.uname(x)) : field === 'due' ? this.m.fmt : (x => x);
+    this.log({ programId: t.programId, taskId: t.id, field: FIELD_LABEL[field], from: f(t[field]), to: f(val) });
+  }
+  freshWiz() { return { step: 1, name: '', location: '', typeId: 'typ_LTS', day1: this.m.addDays(this.m.today(), 120), partnerOrg: '', pocName: '', pocEmail: '', pocPhone: '', shipping: '', hours: '', instructors: '', driveUrl: '', draft: null, pid: this.m.rid('prg') }; }
+  getWiz() { return this.state.wiz || this._fw || (this._fw = this.freshWiz()); }
+  setWiz(p) { this.setState({ wiz: { ...this.getWiz(), ...p } }); }
+
+  renderVals() {
+    const s = this.state;
+    const base = { loading: true, stop: e => e.stopPropagation() };
+    if (!s.ready) return base;
+    setTimeout(() => this.syncFocus(), 0);
+    const m = this.m, db = s.db, t0 = m.today();
+    const users = db.Users, uById = Object.fromEntries(users.map(u => [u.id, u]));
+    const me = uById[s.userId] || users[0];
+    const access = ACCESS[me.role] || ['programs'];
+    let view = s.view;
+    if (view === 'program' ? !access.includes('programs') : !access.includes(view)) view = access[0];
+    const readOnly = me.role === 'Board Member';
+    const isPartner = me.role === 'Partner';
+    const tyById = Object.fromEntries(db.ProgramTypes.map(t => [t.id, t]));
+    const pById = Object.fromEntries(db.Programs.map(p => [p.id, p]));
+    const tasks = db.Tasks, tById = Object.fromEntries(tasks.map(t => [t.id, t]));
+    const roles = m.ROLES;
+
+    const ck = [db.Tasks, db.Programs, db.Users, readOnly, t0];
+    if (!this._vc || this._vc.key.some((k, i) => k !== ck[i])) this._vc = { key: ck, vm: new Map(), ps: new Map() };
+    const cache = this._vc;
+    const vm = t => {
+      let v = cache.vm.get(t.id);
+      if (!v) { v = vmRaw(t); cache.vm.set(t.id, v); }
+      return v;
+    };
+    const vmRaw = t => {
+      const p = pById[t.programId] || {};
+      const d = m.diffDays(t.due, t0), done = t.status === 'Done';
+      const off = m.diffDays(t.due, p.day1);
+      const waiting = (t.dependsOn || []).map(id => tById[id]).filter(x => x && x.status !== 'Done');
+      const st = ST[t.status] || ST['Not started'];
+      return {
+        id: t.id, name: t.name, statusLabel: `Status for ${t.name}`, status: t.status, statusBg: st.bg, statusFg: st.fg, d, done, due: t.due,
+        sub: `${p.name} · ${m.phaseOf(off)}`, timing: m.timingLabel(off) + (t.templateId ? '' : ' · added task'),
+        dueLabel: m.fmt(t.due), relLabel: done ? 'Completed' : d < 0 ? `${-d}d overdue` : d === 0 ? 'Due today' : `in ${d}d`,
+        relColor: !done && d < 0 ? WARN : '#56627F',
+        ownerName: t.ownerId ? (uById[t.ownerId] || {}).name : `Unassigned · ${t.role}`, ownerColor: t.ownerId ? '#2E3A59' : WARN,
+        partnerOwned: !!t.partnerOwned, waiting: waiting.length > 0 && !done, waitLabel: `Waiting on ${waiting.length}`, waitTitle: waiting.map(x => x.name).join(', '),
+        open: () => this.setState({ taskId: t.id, note: '' }), onStatus: e => this.setTask(t, 'status', e.target.value), disabled: readOnly,
+      };
+    };
+    const progStats = p => {
+      if (!cache.ps.has(p.id)) cache.ps.set(p.id, progStatsRaw(p));
+      return cache.ps.get(p.id);
+    };
+    const progStatsRaw = p => {
+      const pt = tasks.filter(t => t.programId === p.id);
+      const done = pt.filter(t => t.status === 'Done').length;
+      const overdue = pt.filter(t => t.status !== 'Done' && t.due < t0).length;
+      const blocked = pt.filter(t => t.status === 'Blocked').length;
+      const d = m.diffDays(p.day1, t0);
+      const health = blocked ? 'Blocked' : overdue >= 3 ? 'At risk' : overdue ? 'Watch' : d < -14 ? 'Wrapping up' : 'On track';
+      return { pt, done, total: pt.length, overdue, blocked, d, health, countdown: d > 0 ? `in ${d} days` : d === 0 ? 'today' : `running · day ${-d + 1}` };
+    };
+
+    const nav = access.map(k => {
+      const active = view === k || (k === 'programs' && view === 'program');
+      let badge = '';
+      if (k === 'mytasks') { const n = tasks.filter(t => t.ownerId === me.id && t.status !== 'Done' && t.due < t0).length; badge = n ? `${n} late` : ''; }
+      return { label: NAV[k][0], icon: NAV[k][1], badge, current: active ? 'page' : undefined, bg: active ? '#E4ECFC' : 'transparent', fg: active ? '#142B7A' : '#2E3A59', go: () => this.go(k, k === 'new' ? { wiz: this.freshWiz() } : {}) };
+    });
+    const progOpts = db.Programs.map(p => ({ id: p.id, name: p.name }));
+
+    const out = {
+      ...base, loading: false, roles, progOpts, nav, userId: me.id,
+      userOpts: users.filter(u => u.active).map(u => ({ id: u.id, label: `${u.name} — ${u.role}` })),
+      onUser: e => this.go(this.state.view, { userId: e.target.value }),
+      accessNote: ACCESS_NOTE[me.role] || 'Staff: tasks, programs, history.',
+      modeLabel: this.api.mode === 'mock' ? 'Mock data · saved in this browser' : 'Connected to Airtable',
+      modeDot: this.api.mode === 'mock' ? '#B86E00' : '#1C7A4C',
+      meRole: me.role, canEdit: !readOnly, canCreate: access.includes('new'),
+      goNew: () => this.go('new', { wiz: this.freshWiz() }), goPrograms: () => this.go('programs'),
+      isMy: view === 'mytasks', isPrograms: view === 'programs', isProgram: view === 'program', isNew: view === 'new',
+      isTemplates: view === 'templates', isHistory: view === 'history', isPortal: view === 'portal', isAdmin: view === 'admin',
+      toast: s.toast, hasToast: !!s.toast,
+    };
+
+    if (view === 'mytasks') {
+      const mineAll = tasks.filter(t => t.ownerId === me.id);
+      const myProgIds = [...new Set(mineAll.map(t => t.programId))].filter(id => pById[id]).sort((a, b) => pById[a].day1 < pById[b].day1 ? -1 : 1);
+      const pf = myProgIds.includes(s.myProgram) ? s.myProgram : 'all';
+      const mine = mineAll.filter(t => pf === 'all' || t.programId === pf).map(vm).sort((a, b) => a.d - b.d);
+      const open = mine.filter(x => !x.done);
+      const openCount = id => mineAll.filter(t => t.status !== 'Done' && (id === 'all' || t.programId === id)).length;
+      const odCount = id => mineAll.filter(t => t.status !== 'Done' && t.due < t0 && (id === 'all' || t.programId === id)).length;
+      const progFilters = [['all', 'All programs'], ...myProgIds.map(id => [id, pById[id].name])].map(([id, label]) => {
+        const on = pf === id, od = odCount(id);
+        return {
+          label, count: openCount(id), selected: on, hasOverdue: od > 0 && !on, odLabel: `${od} overdue`,
+          ariaLabel: `${label}: ${openCount(id)} open${od ? `, ${od} overdue` : ''}`,
+          bg: on ? '#2340A8' : '#FFFFFF', fg: on ? '#FFFFFF' : '#14213D', border: on ? '#2340A8' : '#8792AC', countFg: on ? '#DCE7FB' : '#56627F',
+          go: () => this.setState({ myProgram: id, expanded: {} }),
+        };
+      });
+      const laterT = open.filter(x => x.d > 30), showLater = !!s.expanded.__later, cutoff = m.fmt(m.addDays(t0, 30));
+      const groups = [
+        { label: 'Overdue', color: WARN, tasks: open.filter(x => x.d < 0), capped: true },
+        { label: 'Due in the next 7 days', tasks: open.filter(x => x.d >= 0 && x.d <= 7) },
+        { label: 'Later this month', tasks: open.filter(x => x.d > 7 && x.d <= 30) },
+        ...(showLater ? [{ label: `Due after ${cutoff}`, tasks: laterT }] : []),
+        ...(s.myScope === 'all' ? [{ label: 'Completed', tasks: mine.filter(x => x.done).reverse() }] : []),
+      ].filter(g => g.tasks.length).map(g => {
+        const cap = g.capped && !s.expanded[g.label] && g.tasks.length > 12;
+        return { ...g, color: g.color || '#2E3A59', count: g.tasks.length, tasks: cap ? g.tasks.slice(0, 12) : g.tasks, hasMore: cap, moreLabel: `Show ${g.tasks.length - 12} more`, showMore: () => this.setState({ expanded: { ...this.state.expanded, [g.label]: true } }) };
+      });
+      const nProg = new Set(open.map(x => x.sub.split(' · ')[0])).size;
+      out.my = {
+        groups, empty: !groups.length, emptyText: laterT.length ? 'Nothing overdue or due in the next 30 days.' : 'Nothing assigned to you right now.',
+        hasLater: laterT.length > 0, showLater, laterIcon: showLater ? 'ph ph-caret-up' : 'ph ph-caret-down',
+        laterLabel: showLater ? `Hide tasks due after ${cutoff}` : `Show ${laterT.length} more task${laterT.length === 1 ? '' : 's'} due after ${cutoff}`,
+        toggleLater: () => this.setState({ expanded: { ...this.state.expanded, __later: !showLater } }),
+        progFilters, hasProgFilters: myProgIds.length > 1, filtered: pf !== 'all',
+        filterName: pf !== 'all' ? pById[pf].name : '', filterDay1: pf !== 'all' ? `Day 1 ${m.fmtLong(pById[pf].day1)}` : '',
+        openProgram: () => this.go('program', { programId: pf, tab: 'timeline' }), canOpenProgram: access.includes('programs'),
+        summary: pf !== 'all'
+          ? `${open.filter(x => x.d < 0).length} overdue · ${open.filter(x => x.d >= 0 && x.d <= 30).length} due in the next 30 days · ${open.length} open for this program`
+          : `${open.filter(x => x.d < 0).length} overdue · ${open.filter(x => x.d >= 0 && x.d <= 30).length} due in the next 30 days · ${open.length} open across ${nProg} program${nProg === 1 ? '' : 's'}`,
+        scopes: [['open', 'Open'], ['all', 'Include completed']].map(([k, l]) => ({ label: l, selected: s.myScope === k, bg: s.myScope === k ? '#E7ECF4' : 'transparent', fg: s.myScope === k ? '#14213D' : '#46526F', go: () => this.setState({ myScope: k }) })),
+      };
+    }
+
+    if (view === 'programs') {
+      const rows = db.Programs.slice().sort((a, b) => a.day1 < b.day1 ? -1 : 1).map(p => {
+        const st = progStats(p), ty = tyById[p.typeId] || {};
+        const next = st.pt.filter(t => t.status !== 'Done').sort((a, b) => a.due < b.due ? -1 : 1)[0];
+        const h = HEALTH[st.health];
+        return {
+          name: p.name, location: p.location, typeCode: ty.code, day1Label: m.fmt(p.day1), countdown: st.countdown,
+          pct: st.total ? Math.round(st.done / st.total * 100) : 0, pctLabel: `${p.name} progress`, pctW: `${st.total ? Math.round(st.done / st.total * 100) : 0}%`, doneLabel: `${st.done} of ${st.total} done`,
+          overdue: st.overdue, blocked: st.blocked, overdueColor: st.overdue ? WARN : '#5E6987', blockedColor: st.blocked ? ST.Blocked.fg : '#5E6987',
+          nextName: next ? next.name : 'All tasks complete', nextMeta: next ? `${m.fmt(next.due)} · ${next.ownerId ? uById[next.ownerId]?.name : 'Unassigned'}` : '',
+          health: st.health, healthBg: h.bg, healthFg: h.fg,
+          open: () => this.go('program', { programId: p.id, tab: 'timeline' }),
+        };
+      });
+      const od = tasks.filter(t => t.status !== 'Done' && t.due < t0).length, bl = tasks.filter(t => t.status === 'Blocked').length;
+      out.all = { rows, summary: `${rows.length} launches · ${od} overdue tasks · ${bl} blocked` };
+    }
+
+    if (view === 'program') {
+      const p = pById[s.programId] || db.Programs[0];
+      const st = progStats(p), ty = tyById[p.typeId] || {}, h = HEALTH[st.health];
+      const showAll = !!s.timelineAll[p.id];
+      const phases = m.PHASES.map(ph => {
+        const full = st.pt.filter(t => ph.test(m.diffDays(t.due, p.day1))).sort((a, b) => a.due < b.due ? -1 : a.due > b.due ? 1 : 0).map(vm);
+        const list = showAll ? full : full.filter(x => !x.done && x.d <= 30);
+        const key = p.id + '|' + ph.label;
+        const open = s.phaseOpen[key] ?? true;
+        const od = full.filter(x => !x.done && x.d < 0).length;
+        return {
+          label: ph.label, tasks: open ? list : [], open, chevron: open ? 'ph ph-caret-down' : 'ph ph-caret-right',
+          meta: `${full.filter(x => x.done).length}/${full.length} done${od ? ` · ${od} overdue` : ''}`,
+          toggle: () => this.setState({ phaseOpen: { ...this.state.phaseOpen, [key]: !open } }),
+          n: list.length, border: open ? '1px solid #E7ECF4' : '0',
+        };
+      }).filter(x => x.n);
+      const logs = db.ChangeLog.filter(l => l.programId === p.id).sort((a, b) => a.at < b.at ? 1 : -1).map(l => this.logVM(l, uById, tById, pById));
+      const tabs = [['timeline', 'Timeline'], ['site', 'Site details'], ['history', `History (${logs.length})`]];
+      out.pg = {
+        name: p.name, location: p.location, partnerOrg: p.partnerOrg || 'No partner org yet', typeName: ty.name, health: st.health, healthBg: h.bg, healthFg: h.fg,
+        day1Long: m.fmtLong(p.day1), countdown: st.countdown, doneLabel: `${st.done} of ${st.total} tasks done · ${st.overdue} overdue`,
+        tabs: tabs.map(([k, l]) => ({ label: l, selected: s.tab === k, line: s.tab === k ? '#2340A8' : 'transparent', fg: s.tab === k ? '#14213D' : '#46526F', go: () => this.setState({ tab: k, siteDraft: null }) })),
+        isTimeline: s.tab === 'timeline', isSite: s.tab === 'site', isHistory: s.tab === 'history',
+        phases, history: logs, noHistory: !logs.length, hasDrive: !!p.driveUrl, driveUrl: p.driveUrl,
+        site: SITE_FIELDS.map(([k, l]) => ({ label: l, value: p[k] || 'Missing', color: p[k] ? '#14213D' : WARN })),
+      };
+      const visible = phases.reduce((a, x) => a + x.n, 0);
+      Object.assign(out.pg, {
+        showAll, noVisible: !visible, hasHidden: showAll || visible < st.total, allIcon: showAll ? 'ph ph-caret-up' : 'ph ph-caret-down',
+        windowNote: showAll ? `Showing all ${st.total} tasks` : `Showing overdue and due in the next 30 days · ${visible} of ${st.total} tasks`,
+        allLabel: showAll ? 'Show next 30 days only' : `Show all ${st.total} tasks`,
+        toggleAll: () => this.setState({ timelineAll: { ...this.state.timelineAll, [p.id]: !showAll } }),
+      });
+      out.siteView = !s.siteDraft; out.siteEdit = !!s.siteDraft;
+      out.editSite = () => this.setState({ siteDraft: Object.fromEntries(SITE_FIELDS.map(([k]) => [k, p[k] || ''])) });
+      out.cancelSite = () => this.setState({ siteDraft: null });
+      out.saveSite = () => {
+        const d = this.state.siteDraft, changed = SITE_FIELDS.filter(([k]) => (p[k] || '') !== d[k]);
+        if (changed.length) {
+          this.patch('Programs', p.id, d);
+          changed.forEach(([k, l]) => this.log({ programId: p.id, field: l, from: p[k] || '—', to: d[k] || '—' }));
+        }
+        this.setState({ siteDraft: null }); this.flash(changed.length ? `Saved ${changed.length} site detail${changed.length > 1 ? 's' : ''}` : 'No changes');
+      };
+      if (s.siteDraft) out.sd = { fields: SITE_FIELDS.map(([k, l, ph]) => ({ label: l, ph, value: s.siteDraft[k], onChange: e => this.setState({ siteDraft: { ...this.state.siteDraft, [k]: e.target.value } }) })) };
+      out.openResched = () => this.setState({ resched: { programId: p.id, newDate: p.day1, moveManual: {} } });
+      out.addNoForm = !s.addTask; out.addOpen = !!s.addTask;
+      out.openAddTask = () => this.setState({ addTask: { name: '', due: m.addDays(t0, 7), role: 'Program Assistant' } });
+      out.cancelAddTask = () => this.setState({ addTask: null });
+      if (s.addTask) {
+        const a = s.addTask, upd = k => e => this.setState({ addTask: { ...this.state.addTask, [k]: e.target.value } });
+        out.addT = { ...a, onName: upd('name'), onDue: upd('due'), onRole: upd('role'), invalid: !a.name.trim() || !a.due };
+      }
+      out.saveAddTask = () => {
+        const a = this.state.addTask; if (!a.name.trim()) return;
+        const holders = users.filter(u => u.active && u.role === a.role && (a.role !== 'Partner' || u.programId === p.id));
+        const t = { id: m.rid('tsk'), programId: p.id, templateId: '', name: a.name.trim(), due: a.due, status: 'Not started', role: a.role, ownerId: holders.length === 1 ? holders[0].id : '', notes: '', dependsOn: [], partnerOwned: a.role === 'Partner', manualDate: true };
+        this.insert('Tasks', [t]); this.log({ programId: p.id, taskId: t.id, field: 'Task', from: '', to: 'Added', note: t.name });
+        this.setState({ addTask: null }); this.flash('Task added');
+      };
+    }
+
+    if (view === 'new') {
+      const w = this.getWiz(), on = {};
+      ['name', 'location', 'day1'].forEach(k => on[k] = e => this.setWiz({ [k]: e.target.value, draft: k === 'day1' ? null : this.getWiz().draft }));
+      const type = tyById[w.typeId];
+      const steps = ['Basics & profile', 'Site details', 'Review timeline'].map((l, i) => {
+        const n = i + 1, cur = n === w.step, done = n < w.step;
+        return { n, label: l, border: cur ? '#2340A8' : '#8792AC', fg: cur || done ? '#14213D' : '#56627F', dotBg: cur ? '#2340A8' : done ? '#DCE7FB' : '#E7ECF4', dotFg: cur ? '#FFFFFF' : '#14213D' };
+      });
+      const valid1 = w.name.trim() && w.location.trim() && w.day1;
+      out.w = {
+        ...w, on, steps, is1: w.step === 1, is2: w.step === 2, is3: w.step === 3, canBack: w.step > 1,
+        back: () => this.setWiz({ step: w.step - 1 }),
+        nextLabel: w.step === 3 ? 'Create program' : w.step === 2 ? 'Generate timeline' : 'Continue',
+        nextDisabled: w.step === 1 && !valid1, nextOpacity: w.step === 1 && !valid1 ? 0.45 : 1,
+        hint: w.step === 1 && !valid1 ? 'Name, location and Day 1 are required' : '',
+        types: db.ProgramTypes.map(ty => {
+          const on2 = ty.id === w.typeId;
+          return { selected: on2, name: ty.name, code: ty.code, desc: ty.description, count: db.TemplateTasks.filter(x => x.types.includes(ty.id)).length, bg: on2 ? '#E4ECFC' : '#FFFFFF', border: on2 ? '#2340A8' : '#8792AC', pick: () => this.setWiz({ typeId: ty.id, draft: null }) };
+        }),
+        siteFields: SITE_FIELDS.map(([k, l, ph]) => ({ label: l, ph, value: w[k], onChange: e => this.setWiz({ [k]: e.target.value }) })),
+        next: () => {
+          const W = this.getWiz();
+          if (W.step === 1) return this.setWiz({ step: 2 });
+          if (W.step === 2) {
+            const draft = W.draft || m.generateTasks({ program: { id: W.pid, typeId: W.typeId, day1: W.day1 }, templates: db.TemplateTasks, users }).map(t => ({ ...t, include: true }));
+            return this.setWiz({ step: 3, draft });
+          }
+          const inc = W.draft.filter(t => t.include), ids = new Set(inc.map(t => t.id));
+          const prog = { id: W.pid, name: W.name.trim(), typeId: W.typeId, location: W.location.trim(), day1: W.day1, status: 'Active', managerId: (users.find(u => u.role === 'Program Manager') || {}).id || '', ...Object.fromEntries(SITE_FIELDS.map(([k]) => [k, W[k]])) };
+          const recs = inc.map(({ include, ...t }) => ({ ...t, dependsOn: t.dependsOn.filter(d => ids.has(d)) }));
+          this.insert('Programs', [prog]).then(() => this.insert('Tasks', recs));
+          this.log({ programId: prog.id, field: 'Program', from: '', to: 'Created', note: `Created from ${tyById[W.typeId].name} profile with ${recs.length} tasks` });
+          this._fw = null;
+          this.go('program', { programId: prog.id, tab: 'timeline', wiz: null }); this.flash(`${prog.name} created with ${recs.length} tasks`);
+        },
+      };
+      if (w.step === 3 && w.draft) {
+        const inc = w.draft.filter(t => t.include);
+        const past = inc.filter(t => t.due < t0).length;
+        const first = inc.map(t => t.due).sort()[0];
+        out.w.draftTitle = `${inc.length} of ${w.draft.length} tasks · ${type.name}`;
+        out.w.draftMeta = `Day 1 ${m.fmtLong(w.day1)}${first ? ` · first due ${m.fmt(first)}` : ''}`;
+        out.w.hasPast = past > 0; out.w.pastLabel = `${past} task${past > 1 ? 's are' : ' is'} already past due — Day 1 is less than 4 months away. Adjust dates or uncheck them.`;
+        const setD = (id, p) => this.setWiz({ draft: this.getWiz().draft.map(t => t.id === id ? { ...t, ...p } : t) });
+        out.w.phases = m.PHASES.map(ph => ({
+          label: ph.label,
+          rows: w.draft.filter(t => ph.test(m.diffDays(t.due, w.day1))).map(t => ({
+            incLabel: `Include ${t.name}`, dueAria: `Due date for ${t.name}`, name: t.name, due: t.due, include: t.include, opacity: t.include ? 1 : 0.45,
+            timing: m.timingLabel(m.diffDays(t.due, w.day1)) + (t.partnerOwned ? ' · partner' : ''),
+            owner: t.ownerId ? uById[t.ownerId].name : `Unassigned · ${t.role}`, ownerColor: t.ownerId ? '#2E3A59' : WARN,
+            onToggle: () => setD(t.id, { include: !t.include }), onDue: e => setD(t.id, { due: e.target.value, manualDate: true }),
+          })),
+        })).filter(x => x.rows.length);
+      }
+    }
+
+    if (view === 'templates') {
+      const tt = db.TemplateTasks, ttById = Object.fromEntries(tt.map(x => [x.id, x]));
+      const sel = tyById[s.tplType] || db.ProgramTypes[0];
+      const logT = (field, from, to, note) => this.log({ field: `Template · ${field}`, from: String(from), to: String(to), note });
+      const sorted = tt.slice().sort((a, b) => a.offset - b.offset);
+      const mine = sorted.filter(x => x.types.includes(sel.id));
+      const nextProg = db.Programs.filter(p => p.typeId === sel.id && p.day1 >= t0).sort((a, b) => a.day1 < b.day1 ? -1 : 1)[0];
+      const day1 = s.tplDay1 || (nextProg ? nextProg.day1 : m.addDays(t0, 120));
+      const q = s.tplQuery.trim().toLowerCase();
+      const shown = q ? mine.filter(x => x.name.toLowerCase().includes(q)) : mine;
+      const typeCode = id => (tyById[id] || {}).code;
+      const phaseList = m.PHASES.map((ph, i) => ({ ph, i, rows: shown.filter(x => ph.test(x.offset)) })).filter(x => x.rows.length);
+      const firstKey = phaseList[0] ? phaseList[0].ph.label : '';
+      const isOpen = lbl => q ? true : (s.tplOpen[lbl] ?? lbl === firstKey);
+      const allOpen = phaseList.every(x => isOpen(x.ph.label));
+      out.tp = {
+        selName: sel.name, query: s.tplQuery, day1,
+        onQuery: e => this.setState({ tplQuery: e.target.value }),
+        onDay1: e => e.target.value && this.setState({ tplDay1: e.target.value }),
+        summary: `${mine.length} tasks · ${mine.filter(x => x.partnerOwned).length} done by the partner site · ${db.Programs.filter(p => p.typeId === sel.id).length} program${db.Programs.filter(p => p.typeId === sel.id).length === 1 ? '' : 's'} use this type`,
+        types: db.ProgramTypes.map(ty => {
+          const on = ty.id === sel.id, n = tt.filter(x => x.types.includes(ty.id)).length, np = db.Programs.filter(p => p.typeId === ty.id).length;
+          return { selected: on, name: ty.name, desc: ty.description, meta: `${n} tasks · ${np} program${np === 1 ? '' : 's'}`, bg: on ? '#F2F6FD' : '#FFFFFF', border: on ? '#2340A8' : '#D5DCE8', pick: () => this.setState({ tplType: ty.id, tplOpen: {}, tplQuery: '', tplDay1: null, tplShowOther: false }) };
+        }),
+        allLabel: allOpen ? 'Collapse all' : 'Expand all',
+        toggleAll: () => this.setState({ tplOpen: Object.fromEntries(phaseList.map(x => [x.ph.label, !allOpen])) }),
+        noMatch: !!q && !shown.length,
+        phases: phaseList.map(({ ph, rows }) => {
+          const open = isOpen(ph.label);
+          const offs = rows.map(x => x.offset);
+          return {
+            label: ph.label, open, chevron: open ? 'ph ph-caret-down' : 'ph ph-caret-right',
+            countLabel: `${rows.length} task${rows.length === 1 ? '' : 's'}`,
+            range: `${m.fmt(m.addDays(day1, Math.min(...offs)))} – ${m.fmt(m.addDays(day1, Math.max(...offs)))}`,
+            toggle: () => this.setState({ tplOpen: { ...this.state.tplOpen, [ph.label]: !open } }),
+            rows: rows.map(x => {
+              const waits = (x.dependsOn || []).map(id => ttById[id] && ttById[id].name).filter(Boolean);
+              return {
+                name: x.name, when: whenText(x.offset), example: `e.g. ${m.fmtLong(m.addDays(day1, x.offset))}`,
+                role: x.role, support: (x.supportRoles || []).join(', '), hasSupport: (x.supportRoles || []).length > 0,
+                partner: !!x.partnerOwned, onlyHere: x.types.length === 1, waits: waits.join(', '), hasWaits: waits.length > 0,
+                editLabel: `Edit ${x.name}`, edit: () => this.setState({ tplEdit: { id: x.id, name: x.name, ...splitOff(x.offset), role: x.role, partnerOwned: !!x.partnerOwned, types: [...x.types], dependsOn: [...(x.dependsOn || [])], error: '' } }),
+              };
+            }),
+          };
+        }),
+        add: () => this.setState({ tplEdit: { id: null, name: '', dir: 'before', n: 2, unit: 'weeks', role: 'Program Assistant', partnerOwned: false, types: [sel.id], dependsOn: [], error: '' } }),
+        excluded: sorted.filter(x => !x.types.includes(sel.id)).map(x => ({
+          name: x.name, when: whenText(x.offset), usedBy: x.types.map(typeCode).join(', ') || 'no types', addLabel: `Add ${x.name} to ${sel.name}`,
+          add: () => { this.patch('TemplateTasks', x.id, { types: [...x.types, sel.id] }); logT('Added to type', '—', sel.name, x.name); this.flash(`Added to ${sel.name}`); },
+        })),
+        showOther: !!s.tplShowOther,
+        toggleOther: () => this.setState({ tplShowOther: !this.state.tplShowOther }),
+      };
+      out.tp.hasExcluded = out.tp.excluded.length > 0;
+      out.tp.otherIcon = s.tplShowOther ? 'ph ph-caret-up' : 'ph ph-caret-down';
+      out.tp.otherLabel = s.tplShowOther ? 'Hide other tasks' : `Show ${out.tp.excluded.length} task${out.tp.excluded.length === 1 ? '' : 's'} from other types`;
+
+      const e = s.tplEdit;
+      out.hasTplEdit = !!e;
+      if (e) {
+        const set = p => this.setState({ tplEdit: { ...this.state.tplEdit, ...p, error: '' } });
+        const off = joinOff(e);
+        const orig = e.id && ttById[e.id];
+        out.te = {
+          ...e, kicker: e.id ? `${sel.name} checklist` : `New task · ${sel.name}`, title: e.id ? 'Edit task' : 'Add a task',
+          saveLabel: e.id ? 'Save changes' : 'Add task',
+          isDuring: e.dir === 'during', notDuring: e.dir !== 'during',
+          unitKey: 'u' + e.unit, dirKey: 'd' + e.dir, dayKey: 'n' + e.n, roleKey: 'r' + e.role, depKey: 'k' + e.dependsOn.length,
+          onName: ev => set({ name: ev.target.value }),
+          onN: ev => set({ n: Math.max(1, parseInt(ev.target.value, 10) || 1) }),
+          onUnit: ev => set({ unit: ev.target.value }),
+          onDir: ev => set({ dir: ev.target.value, n: ev.target.value === 'during' ? Math.min(e.n, 5) : e.n }),
+          onRole: ev => set({ role: ev.target.value }),
+          onPartner: () => set({ partnerOwned: !e.partnerOwned }),
+          preview: `${whenText(off)} — for a program starting ${m.fmtLong(day1)}, this is due ${m.fmtLong(m.addDays(day1, off))}.`,
+          types: db.ProgramTypes.map(ty => ({ name: ty.name, on: e.types.includes(ty.id), toggle: () => set({ types: e.types.includes(ty.id) ? e.types.filter(x => x !== ty.id) : [...e.types, ty.id] }) })),
+          deps: e.dependsOn.map(id => ttById[id]).filter(Boolean).map(d => ({ name: d.name, removeLabel: `Remove dependency on ${d.name}`, remove: () => set({ dependsOn: this.state.tplEdit.dependsOn.filter(x => x !== d.id) }) })),
+          noDeps: !e.dependsOn.length,
+          depOpts: sorted.filter(x => x.id !== e.id && !e.dependsOn.includes(x.id) && x.offset <= off).map(x => ({ id: x.id, label: `${x.name} (${whenText(x.offset)})` })),
+          onAddDep: ev => ev.target.value && set({ dependsOn: [...this.state.tplEdit.dependsOn, ev.target.value] }),
+          hasError: !!e.error, canRemove: !!orig && orig.types.includes(sel.id),
+          cancel: () => this.setState({ tplEdit: null }),
+          remove: () => { this.patch('TemplateTasks', orig.id, { types: orig.types.filter(t => t !== sel.id) }); logT('Removed from type', sel.name, '—', orig.name); this.setState({ tplEdit: null }); this.flash(`Removed from ${sel.name}`); },
+          save: () => {
+            const E = this.state.tplEdit, name = E.name.trim(), o2 = joinOff(E);
+            if (!name) return this.setState(st => ({ tplEdit: { ...st.tplEdit, error: 'Give the task a name.' } }));
+            if (!E.types.length) return this.setState(st => ({ tplEdit: { ...st.tplEdit, error: 'Pick at least one program type.' } }));
+            const rec = { name, offset: o2, role: E.role, partnerOwned: E.partnerOwned, types: E.types, dependsOn: E.dependsOn };
+            if (!E.id) {
+              this.insert('TemplateTasks', [{ id: m.rid('tpl'), supportRoles: [], ...rec }]); logT('Added task', '—', name, sel.name);
+              this.setState({ tplEdit: null, tplOpen: { ...this.state.tplOpen, [m.phaseOf(o2)]: true } }); return this.flash('Task added to checklist');
+            }
+            const o = ttById[E.id], changes = [];
+            if (o.name !== name) changes.push(['Task name', o.name, name]);
+            if (o.offset !== o2) changes.push(['Timing', whenText(o.offset), whenText(o2)]);
+            if (o.role !== E.role) changes.push(['Owner role', o.role, E.role]);
+            if (!!o.partnerOwned !== E.partnerOwned) changes.push(['Partner site does this', o.partnerOwned ? 'Yes' : 'No', E.partnerOwned ? 'Yes' : 'No']);
+            if (o.types.slice().sort().join() !== E.types.slice().sort().join()) changes.push(['Program types', o.types.map(typeCode).join(', '), E.types.map(typeCode).join(', ')]);
+            if ((o.dependsOn || []).join() !== E.dependsOn.join()) changes.push(['Waits for', String((o.dependsOn || []).length) + ' tasks', String(E.dependsOn.length) + ' tasks']);
+            if (changes.length) { this.patch('TemplateTasks', o.id, rec); changes.forEach(([f, a, b]) => logT(f, a, b, name)); }
+            this.setState({ tplEdit: null }); this.flash(changes.length ? 'Checklist updated' : 'No changes');
+          },
+        };
+      }
+    }
+
+    if (view === 'history') {
+      out.histProgram = s.histProgram;
+      out.onHistProgram = e => this.setState({ histProgram: e.target.value });
+      out.hist = db.ChangeLog.filter(l => s.histProgram === 'all' || l.programId === s.histProgram).sort((a, b) => a.at < b.at ? 1 : -1).slice(0, 200).map(l => this.logVM(l, uById, tById, pById));
+    }
+
+    if (view === 'portal') {
+      const p = pById[me.programId];
+      if (p) {
+        const st = progStats(p), pm = uById[p.managerId] || {};
+        out.po = {
+          org: p.partnerOrg, name: p.name, day1: m.fmtLong(p.day1), countdown: st.countdown, pm: pm.name, pmEmail: pm.email,
+          shipping: p.shipping ? `Ships to ${p.shipping}` : 'Shipping address missing', hours: p.hours ? `Pool hours: ${p.hours}` : 'Pool hours missing',
+          tasks: st.pt.filter(t => t.partnerOwned || t.ownerId === me.id).sort((a, b) => a.due < b.due ? -1 : 1).map(vm).map(x => ({ ...x, disabled: false })),
+        };
+      } else out.po = { org: '—', name: 'No program linked', day1: '—', countdown: 'ask NMU to link your account', tasks: [] };
+    }
+
+    if (view === 'admin') {
+      const nu = s.newUser, upd = k => e => this.setState({ newUser: { ...this.state.newUser, [k]: e.target.value } });
+      const dup = users.some(u => u.email.toLowerCase() === nu.email.trim().toLowerCase());
+      out.nu = {
+        ...nu, onName: upd('name'), onEmail: upd('email'), onRole: upd('role'),
+        invalid: !nu.name.trim() || !/\S+@\S+\.\S+/.test(nu.email) || dup,
+        msg: dup ? 'Email already exists' : nu.role === 'Partner' ? 'Link a program after adding' : '', msgColor: dup ? WARN : '#56627F',
+        add: () => {
+          const u = { id: m.rid('usr'), name: nu.name.trim(), email: nu.email.trim(), role: nu.role, programId: '', active: true };
+          this.insert('Users', [u]); this.log({ field: 'User added', from: '', to: `${u.name} (${u.role})` });
+          this.setState({ newUser: { name: '', email: '', role: 'Program Assistant' } }); this.flash(`${u.name} added`);
+        },
+      };
+      out.ad = {
+        isMock: this.api.mode === 'mock',
+        modeHelp: this.api.mode === 'mock' ? 'Running on sample data stored in this browser. Point the app at a server proxy that holds the Airtable token to switch to live data — no UI changes needed.' : 'Reading and writing through the server proxy.',
+        reset: async () => { const db2 = await this.api.reset(); this.setState({ db: db2, taskId: null }); this.flash('Demo data reset'); },
+        tables: [['Programs', 'Session + Site'], ['Tasks', 'Work'], ['TemplateTasks', 'Steps'], ['ProgramTypes', 'Template List'], ['Users', 'Users + Roles'], ['ChangeLog', 'Change Log']].map(([k, t]) => ({ table: t, count: db[k].length, fields: Object.keys(db[k][0] || {}).length })),
+        users: users.map(u => ({
+          roleAria: `Role for ${u.name}`, progAria: `Partner program for ${u.name}`, name: u.name, email: u.email, role: u.role, roleKey: u.id + u.role, progKey: u.id + (u.programId || '-'), programId: u.programId, isPartner: u.role === 'Partner', notPartner: u.role !== 'Partner',
+          isMe: u.id === me.id, opacity: u.active ? 1 : 0.5, activeLabel: u.active ? 'Deactivate' : 'Reactivate',
+          onRole: e => { this.patch('Users', u.id, { role: e.target.value }); this.log({ field: `Role · ${u.name}`, from: u.role, to: e.target.value }); },
+          onProgram: e => { this.patch('Users', u.id, { programId: e.target.value }); this.log({ programId: e.target.value, field: `Partner access · ${u.name}`, from: pById[u.programId]?.name || '—', to: pById[e.target.value]?.name || '—' }); },
+          toggle: () => { this.patch('Users', u.id, { active: !u.active }); this.log({ field: `Access · ${u.name}`, from: u.active ? 'Active' : 'Inactive', to: u.active ? 'Inactive' : 'Active' }); },
+        })),
+      };
+    }
+
+    // Task drawer
+    const t = s.taskId && tById[s.taskId];
+    out.hasTask = !!t;
+    out.closeTask = () => this.setState({ taskId: null });
+    out.note = s.note; out.onNote = e => this.setState({ note: e.target.value });
+    out.noteEmpty = !s.note.trim(); out.noteOpacity = s.note.trim() ? 1 : 0.45;
+    if (t) {
+      const p = pById[t.programId] || {}, off = m.diffDays(t.due, p.day1);
+      const owner = uById[t.ownerId];
+      out.dr = {
+        kicker: `${p.name} · ${m.phaseOf(off)}`, name: t.name, ownerKey: t.id + (t.ownerId || '-'), due: t.due, ownerId: t.ownerId, role: t.role,
+        tags: [m.timingLabel(off), t.partnerOwned ? 'Partner-owned' : '', t.manualDate ? 'Date set manually' : '', t.templateId ? '' : 'Added task', (t.supportRoles || []).length ? `With: ${t.supportRoles.join(', ')}` : ''].filter(Boolean),
+        lockStatus: readOnly, lockPlan: readOnly || isPartner,
+        statusOpts: m.STATUSES.map(x => { const on = t.status === x, c = ST[x]; return { label: x, selected: on, bg: on ? c.bg : 'transparent', fg: on ? c.fg : '#46526F', border: on ? c.bg : '#8792AC', set: () => this.setTask(t, 'status', x) }; }),
+        onDue: e => e.target.value && this.setTask(t, 'due', e.target.value),
+        onOwner: e => this.setTask(t, 'ownerId', e.target.value),
+        ownerOpts: users.filter(u => u.active && (u.role !== 'Partner' || u.programId === t.programId)).map(u => ({ id: u.id, label: `${u.name} · ${u.role}` })),
+        reminder: `Email reminders go to ${owner ? owner.name : 'the owner (unassigned)'}${t.partnerOwned ? ' and the site contact' : ''} on ${m.fmt(m.addDays(t.due, -7))} and ${m.fmt(t.due)}.`,
+        deps: (t.dependsOn || []).map(id => tById[id]).filter(Boolean).map(d => ({ name: d.name, status: d.status, bg: ST[d.status].bg, fg: ST[d.status].fg, open: () => this.setState({ taskId: d.id }) })),
+        blocks: tasks.filter(x => (x.dependsOn || []).includes(t.id)).map(d => ({ name: d.name, dueLabel: m.fmt(d.due), open: () => this.setState({ taskId: d.id }) })),
+        notes: (t.notes || '').split('\n').filter(Boolean),
+        log: db.ChangeLog.filter(l => l.taskId === t.id).sort((a, b) => a.at < b.at ? 1 : -1).map(l => this.logVM(l, uById, tById, pById)),
+      };
+      out.dr.hasDeps = out.dr.deps.length > 0; out.dr.hasBlocks = out.dr.blocks.length > 0; out.dr.hasLog = out.dr.log.length > 0;
+      out.addNote = () => {
+        const txt = this.state.note.trim(); if (!txt) return;
+        const line = `[${m.fmt(t0)} · ${me.name}] ${txt}`;
+        this.patch('Tasks', t.id, { notes: (t.notes ? t.notes + '\n' : '') + line });
+        this.log({ programId: t.programId, taskId: t.id, field: 'Note', note: txt });
+        this.setState({ note: '' });
+      };
+    }
+
+    // Reschedule preview
+    const r = s.resched;
+    out.hasResched = !!r;
+    out.closeResched = () => this.setState({ resched: null });
+    if (r) {
+      const p = pById[r.programId], delta = r.newDate ? m.diffDays(r.newDate, p.day1) : 0;
+      const pt = tasks.filter(x => x.programId === p.id).sort((a, b) => a.due < b.due ? -1 : 1);
+      const rows = pt.map(x => {
+        const done = x.status === 'Done', manual = !!x.manualDate && !done;
+        const move = !done && delta !== 0 && (!manual || !!r.moveManual[x.id]);
+        const nd = move ? m.addDays(x.due, delta) : x.due;
+        const past = move && nd < t0;
+        return { x, done, manual, move, nd, past };
+      });
+      const moved = rows.filter(z => z.move), past = moved.filter(z => z.past).length;
+      const kept = rows.filter(z => z.done).length;
+      const regDone = pt.some(x => /registration/i.test(x.name) && x.status === 'Done');
+      const follow = delta === 0 ? [] : [
+        `Email ${p.pocName || 'the site contact'}${p.partnerOrg ? ` at ${p.partnerOrg}` : ''} to confirm the new Day 1, ${m.fmtLong(r.newDate)}.`,
+        `Let lead instructors know${p.instructors ? ` (${p.instructors})` : ''}.`,
+        ...(regDone ? ['Registration is already open — update the listing and notify registered participants.'] : []),
+        ...(past ? [`${past} moved task${past > 1 ? 's' : ''} would land in the past — review them after applying.`] : []),
+      ];
+      out.rs = {
+        program: p.name, oldLabel: m.fmtLong(p.day1), newDate: r.newDate,
+        onDate: e => this.setState({ resched: { ...this.state.resched, newDate: e.target.value } }),
+        deltaLabel: delta === 0 ? 'No change' : `${delta > 0 ? '+' : ''}${delta} days`,
+        summary: delta === 0 ? 'Pick a new date to preview how the timeline shifts.' : `${moved.length} open tasks move by ${delta > 0 ? '+' : ''}${delta} days · ${kept} completed tasks keep their dates · ${rows.filter(z => z.manual && !z.move).length} manually edited kept.`,
+        follow, hasFollow: follow.length > 0,
+        manual: rows.filter(z => z.manual).map(z => ({ name: z.x.name, oldLabel: m.fmt(z.x.due), move: !!r.moveManual[z.x.id], toggle: () => this.setState({ resched: { ...this.state.resched, moveManual: { ...this.state.resched.moveManual, [z.x.id]: !this.state.resched.moveManual[z.x.id] } } }) })),
+        rows: rows.map(z => ({
+          name: z.x.name, oldLabel: m.fmt(z.x.due), newLabel: m.fmt(z.nd), opacity: z.move ? 1 : 0.5,
+          newColor: z.past ? WARN : z.move ? '#1F3A9E' : '#56627F',
+          flag: z.done ? 'Done · kept' : z.manual && !z.move ? 'Manual · kept' : z.past ? 'Lands in past' : z.move ? 'Moves' : '',
+          flagColor: z.past ? WARN : '#56627F',
+        })),
+        noChange: delta === 0 || !r.newDate, applyOpacity: delta === 0 ? 0.45 : 1,
+      };
+      out.rs.hasManual = out.rs.manual.length > 0;
+      out.applyResched = () => {
+        if (!delta) return;
+        this.patchMany('Tasks', moved.map(z => ({ id: z.x.id, patch: { due: z.nd } })));
+        this.patch('Programs', p.id, { day1: r.newDate });
+        this.log({ programId: p.id, field: 'Day 1', from: m.fmt(p.day1), to: m.fmt(r.newDate), note: `Moved ${moved.length} open tasks by ${delta > 0 ? '+' : ''}${delta}d; ${kept} completed kept` });
+        this.setState({ resched: null }); this.flash(`Day 1 moved · ${moved.length} tasks rescheduled`);
+      };
+    }
+    return out;
+  }
+
+  logVM(l, uById, tById, pById) {
+    const t = l.taskId && tById[l.taskId];
+    const change = l.from || l.to ? (l.from ? `${l.from} → ${l.to}` : l.to) : '';
+    return {
+      when: this.m.fmtWhen(l.at), who: (uById[l.userId] || {}).name || '—', program: (pById[l.programId] || {}).name || 'System',
+      what: t ? `${t.name} · ${l.field}` : l.field, change: change ? `: ${change}` : '', note: l.note, hasNote: !!l.note,
+    };
+  }
+}
+</script>
+</body>
+</html>

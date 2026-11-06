@@ -1,0 +1,12 @@
+{
+  "name": "nmu-launch-airtable",
+  "private": true,
+  "type": "module",
+  "description": "NMU Launch prototype connected to Airtable through a Vercel server function",
+  "scripts": {
+    "build": "node tools/build-bundle.mjs"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

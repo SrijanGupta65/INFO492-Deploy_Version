@@ -1,0 +1,9 @@
+# Secrets: never commit
+.env
+.env.*
+!.env.example
+
+# Local tooling
+node_modules/
+.vercel/
+.DS_Store
