@@ -5,7 +5,6 @@
 
 # Local tooling
 node_modules/
-.vercel/
 .DS_Store
 .next/
 next-env.d.ts

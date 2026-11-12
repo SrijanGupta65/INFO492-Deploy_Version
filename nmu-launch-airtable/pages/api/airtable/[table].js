@@ -1,4 +1,4 @@
-// Next.js API route (runs on AWS Amplify or Vercel): GET/POST/PATCH /api/airtable/<table>
+// Next.js API route (runs on AWS Amplify): GET/POST/PATCH /api/airtable/<table>
 // Forwards the app's requests to Airtable and adds the token on the server, so the token
 // never reaches the browser. Only the tables the app uses are allowed through.
 //
