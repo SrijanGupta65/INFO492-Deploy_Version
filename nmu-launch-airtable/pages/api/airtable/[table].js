@@ -1,10 +1,11 @@
-// Vercel serverless function: GET/POST/PATCH /api/airtable/<table>
+// Next.js API route (runs on AWS Amplify or Vercel): GET/POST/PATCH /api/airtable/<table>
 // Forwards the app's requests to Airtable and adds the token on the server, so the token
 // never reaches the browser. Only the tables the app uses are allowed through.
 //
-// Needs two environment variables (Vercel → Project → Settings → Environment Variables):
+// Environment variables (Amplify → App settings → Environment variables):
 //   AIRTABLE_TOKEN    personal access token (data.records:read, data.records:write; this base only)
 //   AIRTABLE_BASE_ID  the base the app reads and writes (starts with "app")
+//   APP_PASSCODE      optional; if set, the app asks visitors for this code once per browser
 
 const ALLOWED_TABLES = new Set([
   'Template List', 'Steps', 'Roles', 'Users', 'Site', 'Session', 'Instructors', 'Work', 'Change Log',
@@ -16,6 +17,12 @@ export default async function handler(req, res) {
   const base = process.env.AIRTABLE_BASE_ID;
   if (!token || !base) {
     return res.status(500).json({ error: { message: 'Server is missing AIRTABLE_TOKEN or AIRTABLE_BASE_ID' } });
+  }
+
+  // Optional shared passcode. If APP_PASSCODE is set, every request must carry it.
+  const passcode = process.env.APP_PASSCODE;
+  if (passcode && req.headers['x-app-passcode'] !== passcode) {
+    return res.status(401).json({ error: { message: 'Passcode required' } });
   }
 
   const table = String(req.query.table || '');

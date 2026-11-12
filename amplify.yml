@@ -1,0 +1,22 @@
+version: 1
+applications:
+  - appRoot: nmu-launch-airtable
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - npm install
+        build:
+          commands:
+            # Amplify only passes environment variables to the build, so copy the ones the
+            # API route needs into .env.production, where Next.js reads them at run time.
+            - env | grep -E '^(AIRTABLE_TOKEN|AIRTABLE_BASE_ID|APP_PASSCODE)=' >> .env.production || true
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - .next/cache/**/*

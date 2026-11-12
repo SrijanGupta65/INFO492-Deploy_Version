@@ -2,11 +2,16 @@
   "name": "nmu-launch-airtable",
   "private": true,
   "type": "module",
-  "description": "NMU Launch prototype connected to Airtable through a Vercel server function",
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "bundle": "node tools/build-bundle.mjs"
   },
-  "engines": {
-    "node": "22.x"
-  }
+  "dependencies": {
+    "next": "15.5.29",
+    "react": "19.1.10",
+    "react-dom": "19.1.10"
+  },
+  "engines": { "node": ">=20" }
 }

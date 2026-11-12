@@ -221,9 +221,20 @@ export function createAirtableAdapter({ proxyUrl }) {
     const wait = 220 - (Date.now() - lastCall); // Airtable allows 5 requests per second per base
     if (wait > 0) await sleep(wait);
     lastCall = Date.now();
-    const res = await fetch(`${proxyUrl}/${encodeURIComponent(table)}${query}`, {
-      method, headers: { 'Content-Type': 'application/json' }, body: body ? JSON.stringify(body) : undefined,
+    // Optional team passcode: the server asks for one only when APP_PASSCODE is set there.
+    const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
+    const send = () => fetch(`${proxyUrl}/${encodeURIComponent(table)}${query}`, {
+      method,
+      headers: { 'Content-Type': 'application/json', 'X-App-Passcode': (store && store.getItem('nmu_passcode')) || '' },
+      body: body ? JSON.stringify(body) : undefined,
     });
+    let res = await send();
+    for (let tries = 0; res.status === 401 && tries < 3; tries++) {
+      const code = window.prompt(tries ? 'That passcode didn’t work. Try again:' : 'Enter the team passcode:');
+      if (code == null) break;
+      if (store) store.setItem('nmu_passcode', code.trim());
+      res = await send();
+    }
     if (!res.ok) {
       let msg = `Airtable ${res.status}`;
       try { const j = await res.json(); if (j.error) msg += ` · ${j.error.message || j.error.type || j.error}`; } catch (e) { }

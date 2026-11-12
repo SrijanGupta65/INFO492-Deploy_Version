@@ -28,5 +28,5 @@ ${body}
 window.NMUData = { ${names.join(', ')} };
 })();
 `;
-writeFileSync(join(root, 'nmu-bundle.js'), out);
+writeFileSync(join(root, 'public', 'nmu-bundle.js'), out);
 console.log(`nmu-bundle.js written · ${names.length} exports`);
