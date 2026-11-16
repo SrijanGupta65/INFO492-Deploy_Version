@@ -7,21 +7,19 @@
 //   AIRTABLE_BASE_ID  the base the app reads and writes (starts with "app")
 //   APP_PASSCODE      optional; if set, the app asks visitors for this code once per browser
 
+import { env, passcodeOk } from '../../../lib/server.js';
+
 const ALLOWED_TABLES = new Set([
   'Template List', 'Steps', 'Roles', 'Users', 'Site', 'Session', 'Instructors', 'Work', 'Change Log',
 ]);
 const ALLOWED_METHODS = new Set(['GET', 'POST', 'PATCH']);
 
 export default async function handler(req, res) {
-  const token = process.env.AIRTABLE_TOKEN;
-  const base = process.env.AIRTABLE_BASE_ID;
-  if (!token || !base) {
+  const { token, base, ok } = env();
+  if (!ok) {
     return res.status(500).json({ error: { message: 'Server is missing AIRTABLE_TOKEN or AIRTABLE_BASE_ID' } });
   }
-
-  // Optional shared passcode. If APP_PASSCODE is set, every request must carry it.
-  const passcode = process.env.APP_PASSCODE;
-  if (passcode && req.headers['x-app-passcode'] !== passcode) {
+  if (!passcodeOk(req)) {
     return res.status(401).json({ error: { message: 'Passcode required' } });
   }
 

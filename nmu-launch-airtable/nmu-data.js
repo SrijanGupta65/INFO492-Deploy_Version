@@ -11,21 +11,47 @@ import { TEMPLATE_ROWS } from './nmu-template.js';
 export const ROLES = ['Program Manager', 'Program Assistant', 'Executive Director', 'Marketing Director', 'Operations Director', 'Grant Writer', 'Board Member', 'Partner'];
 export const STATUSES = ['Not started', 'In progress', 'Blocked', 'Done'];
 
+// Activity types. Tasks are color-coded by these. A step's category is suggested from its wording
+// (categorize) until someone sets it in Airtable or in the app.
+export const CATEGORIES = ['Funding', 'Admin', 'Outreach', 'Logistics', 'Instruction'];
+const CAT_RULES = [
+  ['Funding', /fund|donat|donor|sponsor|grant|matching gift|in-kind|business partners/i],
+  ['Logistics', /suppl|\bship|inventory|uniform|print/i],
+  ['Instruction', /instructor|training|quiz|coach|attendance|lesson|certificate|daily plan/i],
+  ['Outreach', /reminder|photos|publish a|follow-up meeting/i],
+  ['Admin', /agreement|insurance|release form|paperwork|compliance|tracking system|planning sheet|folder|archive|data for|report|verify|records?\b|registration (list|system)|screening|policy|contact list|signed forms|resources hidden|outline/i],
+  ['Outreach', /email|text |texts|post|social|flyer|invite|announce|campaign|famil|reach out|contact|communications|share|follow|introductions|relationships|clubs|volunteer|winner|incentive|thank/i],
+  ['Logistics', /schedul|calendar|availability|meeting|kickoff|brief/i],
+];
+const CAT_BY_ROLE = { 'Grant Writer': 'Funding', 'Marketing Director': 'Outreach', 'Operations Director': 'Logistics', 'Partner': 'Logistics' };
+export const categorize = (name, role) => (CAT_RULES.find(([, re]) => re.test(name || '')) || [CAT_BY_ROLE[role] || 'Admin'])[0];
+
+// State for grouping programs: the State field, else a trailing two-letter code in the location ("Seattle WA").
+export const stateOf = p => (p.state || (/\b([A-Z]{2})\s*$/.exec(p.location || '') || [])[1] || '').toUpperCase();
+export const cityOf = p => p.city || '';
+
+// Task links are stored one per line as "Title | https://…".
+export const parseLinks = txt => String(txt || '').split('\n').map(l => l.trim()).filter(Boolean).map(l => {
+  const i = l.lastIndexOf(' | ');
+  return i > 0 ? { title: l.slice(0, i).trim(), url: l.slice(i + 3).trim() } : { title: l, url: l };
+});
+export const formatLinks = list => (list || []).map(x => (x.title && x.title !== x.url ? `${x.title} | ${x.url}` : x.url)).join('\n');
+
 // Table and field names in NMU's Airtable base (see "NMU Airtable Design").
 // If an admin renames a table or field in Airtable, change the name here too.
 export const AT = {
   types: { table: 'Template List', name: 'List Name (Unique)', code: 'Code', description: 'Description', status: 'Status' },
-  steps: { table: 'Steps', name: 'Short Description', days: 'Days', types: 'Template', role: 'Roles', support: 'Supporting Roles', deps: 'Dependencies', partner: 'Partner Owned' },
+  steps: { table: 'Steps', name: 'Short Description', days: 'Days', types: 'Template', role: 'Roles', support: 'Supporting Roles', deps: 'Dependencies', partner: 'Partner Owned', category: 'Category' },
   roles: { table: 'Roles', name: 'Role Name' },
   users: { table: 'Users', email: 'Email Address', first: 'First Name', last: 'Last Name', status: 'Status', roles: 'Roles', site: 'Partner Site' },
-  sites: { table: 'Site', name: 'Program Name', location: 'Program Location', partnerOrg: 'Partner Org', pocName: 'POC Name', pocEmail: 'POC Email', pocPhone: 'POC Phone', shipping: 'Shipping Address' },
-  sessions: { table: 'Session', label: 'Session Name', site: 'Site', start: 'Start Date', status: 'Status', hours: 'Program Hours', instructors: 'Instructors', type: 'Program Type', manager: 'Program Manager', drive: 'Drive Folder' },
+  sites: { table: 'Site', name: 'Program Name', location: 'Program Location', partnerOrg: 'Partner Org', pocName: 'POC Name', pocEmail: 'POC Email', pocPhone: 'POC Phone', shipping: 'Shipping Address', city: 'City', state: 'State' },
+  sessions: { table: 'Session', label: 'Session Name', site: 'Site', start: 'Start Date', status: 'Status', hours: 'Program Hours', instructors: 'Instructors', type: 'Program Type', manager: 'Program Manager', drive: 'Drive Folder', pinned: 'Pinned', archived: 'Archived' },
   instructors: { table: 'Instructors', name: 'Instructor Name' },
-  work: { table: 'Work', session: 'Session', step: 'Steps', name: 'Task Name', due: 'Due Date', manualDue: 'Manual Due Date', offset: 'Offset Days', status: 'Task Status', completed: 'Completed Date', role: 'Role', owner: 'Owner', notes: 'Notes', deps: 'Depends On', partner: 'Partner Owned' },
+  work: { table: 'Work', session: 'Session', step: 'Steps', name: 'Task Name', due: 'Due Date', manualDue: 'Manual Due Date', offset: 'Offset Days', status: 'Task Status', completed: 'Completed Date', role: 'Role', owner: 'Owner', notes: 'Notes', deps: 'Depends On', partner: 'Partner Owned', category: 'Category', priority: 'Priority', attachments: 'Attachments', links: 'Links' },
   log: { table: 'Change Log', at: 'Timestamp', user: 'User', session: 'Session', work: 'Work', field: 'Field', from: 'Old Value', to: 'New Value', note: 'Note' },
 };
 // Program fields stored on the Site record (the rest live on the Session).
-const SITE_KEYS = ['name', 'location', 'partnerOrg', 'pocName', 'pocEmail', 'pocPhone', 'shipping'];
+const SITE_KEYS = ['name', 'location', 'partnerOrg', 'pocName', 'pocEmail', 'pocPhone', 'shipping', 'city', 'state'];
 
 // ---------- dates ----------
 const pad = n => String(n).padStart(2, '0');
@@ -39,8 +65,10 @@ export const fmtLong = s => s ? parse(s).toLocaleDateString('en-US', { weekday: 
 export const fmtWhen = ts => new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 export const rid = p => `${p}_${Math.random().toString(36).slice(2, 10)}`;
 
+// Planning can start up to 6 months before Day 1.
 export const PHASES = [
-  { label: '3–4 months prior', test: o => o <= -90 },
+  { label: '4–6 months prior', test: o => o <= -120 },
+  { label: '3–4 months prior', test: o => o > -120 && o <= -90 },
   { label: '2–3 months prior', test: o => o > -90 && o <= -60 },
   { label: '1–2 months prior', test: o => o > -60 && o <= -30 },
   { label: 'Final month', test: o => o > -30 && o <= -8 },
@@ -72,6 +100,7 @@ export function generateTasks({ program, templates, users }) {
       ownerId: holders.length === 1 ? holders[0].id : '', notes: '',
       dependsOn: (t.dependsOn || []).map(d => idFor[d]).filter(Boolean),
       partnerOwned: !!t.partnerOwned, manualDate: false, supportRoles: t.supportRoles || [],
+      category: t.category || categorize(t.name, t.role), priority: false, attachments: [], links: [],
     };
   });
 }
@@ -126,7 +155,7 @@ const TPL = (() => {
   const all = [...TEMPLATE_ROWS.map(r => [...r, null, false]), ...EXTRA];
   const list = all.map(([timing, name, role, support, types, partnerOwned], i) => ({
     id: 'tpl_' + String(i + 1).padStart(3, '0'), name, offset: parseTiming(timing), role, supportRoles: support,
-    types: types || ONLY[name] || A, dependsOn: [], partnerOwned,
+    types: types || ONLY[name] || A, dependsOn: [], partnerOwned, category: categorize(name, role),
   }));
   const byName = Object.fromEntries(list.map(t => [t.name, t]));
   DEPS.forEach(([a, b]) => { if (byName[a] && byName[b]) byName[a].dependsOn.push(byName[b].id); });
@@ -153,16 +182,18 @@ function seed() {
     ['typ_CITY', 'CITY', 'City program', 'City parks department lists and registers. Extra compliance review.'],
   ].map(([id, code, name, description]) => ({ id, code, name, description }));
   const Programs = [
-    { id: 'prg_uw', name: 'UW Swim Safely Series', typeId: 'typ_SSS', location: 'UW IMA Pool, Seattle WA', day1: addDays(t0, 24), partnerOrg: 'UW Recreation', pocName: 'Chris Dunn (Head Coach)', pocEmail: 'cdunn@uw.edu', pocPhone: '206-555-0142', shipping: '3924 Montlake Blvd NE, Seattle WA 98195', hours: 'Tue/Thu 6–8 PM', instructors: 'Jordan P., Alex R.', driveUrl: 'https://drive.google.com/drive/folders/uw-sss', managerId: 'usr_jordan', status: 'Active' },
-    { id: 'prg_ymca', name: 'YMCA Tacoma Learn to Swim', typeId: 'typ_YMCA', location: 'Center for Healthy Living, Tacoma WA', day1: addDays(t0, 68), partnerOrg: 'YMCA of Pierce County', pocName: 'Sarah Lin (Aquatics Director)', pocEmail: 'slin@ymcatacoma.org', pocPhone: '253-555-0188', shipping: '1144 Market St, Tacoma WA 98402', hours: 'Sat 9 AM–12 PM', instructors: 'Sam T.', driveUrl: '', managerId: 'usr_jordan', status: 'Active' },
-    { id: 'prg_rb', name: 'Rainier Beach Community Swim', typeId: 'typ_CITY', location: 'Rainier Beach Pool, Seattle WA', day1: addDays(t0, 118), partnerOrg: 'Seattle Parks & Recreation', pocName: '', pocEmail: '', pocPhone: '', shipping: '', hours: '', instructors: '', driveUrl: '', managerId: 'usr_jordan', status: 'Active' },
-    { id: 'prg_bel', name: 'Bellevue Learn to Swim Pilot', typeId: 'typ_LTS', location: 'Bellevue Aquatic Center, Bellevue WA', day1: addDays(t0, -35), partnerOrg: 'City of Bellevue Aquatics', pocName: 'Ken Ward', pocEmail: 'kward@bellevue.gov', pocPhone: '425-555-0110', shipping: '601 143rd Ave NE, Bellevue WA 98007', hours: 'Mon/Wed 4–6 PM', instructors: 'Jordan P.', driveUrl: 'https://drive.google.com/drive/folders/bel-lts', managerId: 'usr_jordan', status: 'Active' },
+    { id: 'prg_uw', name: 'UW Swim Safely Series', typeId: 'typ_SSS', location: 'UW IMA Pool, Seattle WA', day1: addDays(t0, 24), partnerOrg: 'UW Recreation', pocName: 'Chris Dunn (Head Coach)', pocEmail: 'cdunn@uw.edu', pocPhone: '206-555-0142', shipping: '3924 Montlake Blvd NE, Seattle WA 98195', hours: 'Tue/Thu 6–8 PM', instructors: 'Jordan P., Alex R.', driveUrl: 'https://drive.google.com/drive/folders/uw-sss', managerId: 'usr_jordan', status: 'Active', city: 'Seattle', state: 'WA', pinned: true, archived: false },
+    { id: 'prg_ymca', name: 'YMCA Tacoma Learn to Swim', typeId: 'typ_YMCA', location: 'Center for Healthy Living, Tacoma WA', day1: addDays(t0, 68), partnerOrg: 'YMCA of Pierce County', pocName: 'Sarah Lin (Aquatics Director)', pocEmail: 'slin@ymcatacoma.org', pocPhone: '253-555-0188', shipping: '1144 Market St, Tacoma WA 98402', hours: 'Sat 9 AM–12 PM', instructors: 'Sam T.', driveUrl: '', managerId: 'usr_jordan', status: 'Active', city: 'Tacoma', state: 'WA', pinned: false, archived: false },
+    { id: 'prg_rb', name: 'Rainier Beach Community Swim', typeId: 'typ_CITY', location: 'Rainier Beach Pool, Seattle WA', day1: addDays(t0, 118), partnerOrg: 'Seattle Parks & Recreation', pocName: '', pocEmail: '', pocPhone: '', shipping: '', hours: '', instructors: '', driveUrl: '', managerId: 'usr_jordan', status: 'Active', city: 'Seattle', state: 'WA', pinned: false, archived: false },
+    { id: 'prg_bel', name: 'Bellevue Learn to Swim Pilot', typeId: 'typ_LTS', location: 'Bellevue Aquatic Center, Bellevue WA', day1: addDays(t0, -35), partnerOrg: 'City of Bellevue Aquatics', pocName: 'Ken Ward', pocEmail: 'kward@bellevue.gov', pocPhone: '425-555-0110', shipping: '601 143rd Ave NE, Bellevue WA 98007', hours: 'Mon/Wed 4–6 PM', instructors: 'Jordan P.', driveUrl: 'https://drive.google.com/drive/folders/bel-lts', managerId: 'usr_jordan', status: 'Active', city: 'Bellevue', state: 'WA', pinned: false, archived: false },
+    { id: 'prg_pdx', name: 'Portland Parks Learn to Swim', typeId: 'typ_CITY', location: 'Matt Dishman Pool, Portland OR', day1: addDays(t0, 52), partnerOrg: 'Portland Parks & Recreation', pocName: 'Dana Ruiz (Aquatics Supervisor)', pocEmail: 'druiz@portlandoregon.gov', pocPhone: '503-555-0127', shipping: '77 NE Knott St, Portland OR 97212', hours: 'Sat/Sun 10 AM–12 PM', instructors: '', driveUrl: '', managerId: 'usr_jordan', status: 'Active', city: 'Portland', state: 'OR', pinned: false, archived: false },
+    { id: 'prg_old', name: 'Spokane Learn to Swim (spring)', typeId: 'typ_LTS', location: 'Hillyard Pool, Spokane WA', day1: addDays(t0, -170), partnerOrg: 'Spokane Parks', pocName: 'Lee Park', pocEmail: 'lpark@spokanecity.org', pocPhone: '509-555-0190', shipping: '', hours: 'Mon–Fri 9–11 AM', instructors: 'Alex R.', driveUrl: '', managerId: 'usr_jordan', status: 'Complete', city: 'Spokane', state: 'WA', pinned: false, archived: true },
   ];
   let Tasks = [];
   for (const p of Programs) Tasks.push(...generateTasks({ program: p, templates: TPL, users: Users }));
   Tasks = Tasks.map((t, i) => {
     const d = diffDays(t.due, t0);
-    const status = d < -2 ? 'Done' : d <= 7 ? (i % 2 ? 'In progress' : 'Not started') : 'Not started';
+    const status = t.programId === 'prg_old' || d < -2 ? 'Done' : d <= 7 ? (i % 2 ? 'In progress' : 'Not started') : 'Not started';
     return { ...t, status };
   });
   const set = (prog, name, patch) => { const t = Tasks.find(x => x.programId === prog && x.name === name); if (t) Object.assign(t, patch); };
@@ -172,10 +203,14 @@ function seed() {
   set('prg_ymca', 'Approach financial institutions and companies about matching gifts', { status: 'Not started' });
   set('prg_ymca', 'Launch a joint fundraising campaign with the host', { status: 'In progress' });
   set('prg_rb', 'Reach out to partner contacts at the host site', { status: 'In progress' });
+  set('prg_uw', 'Send the volunteer roster to the host for screening', { priority: true });
+  set('prg_ymca', 'Launch a joint fundraising campaign with the host', { priority: true, links: [{ title: 'Campaign page draft', url: 'https://docs.google.com/document/d/example' }] });
+  set('prg_pdx', 'Send the host the required insurance paperwork for review', { priority: true });
   const ChangeLog = [
     [-3, 'usr_jordan', 'prg_uw', 'Send the volunteer roster to the host for screening', 'Status', 'In progress', 'Blocked', 'Host screening backlog'],
     [-4, 'usr_jordan', 'prg_ymca', '', 'Day 1', fmt(addDays(t0, 61)), fmt(addDays(t0, 68)), 'Pool maintenance closure moved launch a week; 24 open tasks shifted'],
     [-2, 'usr_morgan', 'prg_uw', 'Ship or deliver supplies to the host site', 'Status', 'Not started', 'In progress', ''],
+    [-30, 'usr_jordan', 'prg_old', '', 'Archived', 'Active', 'Archived', 'Program finished; kept for reference'],
     [-1, 'usr_jordan', 'prg_rb', '', 'Program', '', 'Created', `Created from City program profile with ${Tasks.filter(x => x.programId === 'prg_rb').length} tasks`],
   ].map(([d, userId, programId, tpl, field, from, to, note], i) => {
     const t = tpl && Tasks.find(x => x.programId === programId && x.name === tpl);
@@ -186,7 +221,7 @@ function seed() {
 }
 
 // ---------- adapters ----------
-const KEY = 'nmu-launch-proto-db-v2';
+const KEY = 'nmu-launch-proto-db-v3';
 const clone = o => JSON.parse(JSON.stringify(o));
 
 export function createMockAdapter() {
@@ -202,6 +237,14 @@ export function createMockAdapter() {
     async update(table, id, patch) { db[table] = db[table].map(r => r.id === id ? { ...r, ...patch } : r); persist(); },
     async updateMany(table, list) { const m = Object.fromEntries(list.map(x => [x.id, x.patch])); db[table] = db[table].map(r => m[r.id] ? { ...r, ...m[r.id] } : r); persist(); },
     async reset() { db = seed(); persist(); return clone(db); },
+    // Sample data keeps small files in this browser only (localStorage is limited to a few MB).
+    async uploadAttachment(taskId, file) {
+      if (file.size > 400 * 1024) throw new Error('Sample data mode keeps files under 400 KB. The live app accepts up to 3 MB.');
+      const url = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(r.result); r.onerror = () => rej(r.error); r.readAsDataURL(file); });
+      const att = { id: rid('att'), filename: file.name, url, size: file.size, type: file.type };
+      db.Tasks = db.Tasks.map(t => t.id === taskId ? { ...t, attachments: [...(t.attachments || []), att] } : t); persist();
+      return (db.Tasks.find(t => t.id === taskId) || {}).attachments || [att];
+    },
   };
 }
 
@@ -217,13 +260,13 @@ export function createAirtableAdapter({ proxyUrl }) {
   const A = AT;
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   let lastCall = 0;
-  const call = async (table, { method = 'GET', query = '', body } = {}) => {
+  const request = async (url, { method = 'GET', body } = {}) => {
     const wait = 220 - (Date.now() - lastCall); // Airtable allows 5 requests per second per base
     if (wait > 0) await sleep(wait);
     lastCall = Date.now();
     // Optional team passcode: the server asks for one only when APP_PASSCODE is set there.
     const store = (() => { try { return window.localStorage; } catch (e) { return null; } })();
-    const send = () => fetch(`${proxyUrl}/${encodeURIComponent(table)}${query}`, {
+    const send = () => fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json', 'X-App-Passcode': (store && store.getItem('nmu_passcode')) || '' },
       body: body ? JSON.stringify(body) : undefined,
@@ -242,6 +285,8 @@ export function createAirtableAdapter({ proxyUrl }) {
     }
     return res.json();
   };
+  const call = (table, { method = 'GET', query = '', body } = {}) => request(`${proxyUrl}/${encodeURIComponent(table)}${query}`, { method, body });
+  const uploadUrl = proxyUrl.replace(/\/airtable\/?$/, '') + '/upload';
   const listTable = async table => {
     const out = []; let offset = '';
     do {
@@ -289,8 +334,10 @@ export function createAirtableAdapter({ proxyUrl }) {
         id: r.id, name: f[A.steps.name] || '', offset: -(Number(f[A.steps.days]) || 0), role: roleName[one(f[A.steps.role])] || '',
         supportRoles: many(f[A.steps.support]).map(id => roleName[id]).filter(Boolean), types: many(f[A.steps.types]),
         dependsOn: many(f[A.steps.deps]), partnerOwned: !!f[A.steps.partner],
+        category: f[A.steps.category] || '', categorySet: !!f[A.steps.category],
       };
     });
+    TemplateTasks.forEach(t => { if (!t.category) t.category = categorize(t.name, t.role); });
     const tplById = Object.fromEntries(TemplateTasks.map(t => [t.id, t]));
     const Programs = Se.map(r => {
       const f = r.fields, site = siteById[one(f[A.sessions.site])], sf = site ? site.fields : {};
@@ -301,6 +348,7 @@ export function createAirtableAdapter({ proxyUrl }) {
         shipping: sf[A.sites.shipping] || '', hours: f[A.sessions.hours] || '',
         instructors: many(f[A.sessions.instructors]).map(id => instName[id]).filter(Boolean).join(', '),
         driveUrl: f[A.sessions.drive] || '', managerId: one(f[A.sessions.manager]),
+        city: sf[A.sites.city] || '', state: sf[A.sites.state] || '', pinned: !!f[A.sessions.pinned], archived: !!f[A.sessions.archived],
       };
     });
     const Tasks = W.map(r => {
@@ -311,12 +359,15 @@ export function createAirtableAdapter({ proxyUrl }) {
         role: roleName[one(f[A.work.role])] || tpl.role || '', ownerId: one(f[A.work.owner]), notes: f[A.work.notes] || '',
         dependsOn: many(f[A.work.deps]), partnerOwned: !!f[A.work.partner], manualDate: !!f[A.work.manualDue],
         supportRoles: tpl.supportRoles || [],
+        category: f[A.work.category] || tpl.category || '', categorySet: !!f[A.work.category], priority: !!f[A.work.priority],
+        attachments: many(f[A.work.attachments]).map(a => ({ id: a.id, filename: a.filename, url: a.url, size: a.size, type: a.type })),
+        links: parseLinks(f[A.work.links]),
       };
     });
     // A partner sees the program at their site: the next one coming up, else the most recent.
     const t0 = today();
     const partnerProgram = siteId => {
-      const at = Programs.filter(p => p.siteId && p.siteId === siteId).sort((a, b) => (a.day1 < b.day1 ? -1 : 1));
+      const at = Programs.filter(p => p.siteId && p.siteId === siteId && !p.archived).sort((a, b) => (a.day1 < b.day1 ? -1 : 1));
       return (at.find(p => p.day1 >= t0) || at[at.length - 1] || {}).id || '';
     };
     const Users = U.map(r => {
@@ -333,6 +384,7 @@ export function createAirtableAdapter({ proxyUrl }) {
         field: f[A.log.field] || '', from: f[A.log.from] || '', to: f[A.log.to] || '', note: f[A.log.note] || '',
       };
     });
+    Tasks.forEach(t => { if (!t.category) t.category = categorize(t.name, t.role); });
     const db = { Users, ProgramTypes, TemplateTasks, Programs, Tasks, ChangeLog };
     cache = { ...db, roleId };
     return JSON.parse(JSON.stringify(db));
@@ -349,6 +401,11 @@ export function createAirtableAdapter({ proxyUrl }) {
     if (has(p, 'role')) f[A.work.role] = roleLink(p.role);
     if (has(p, 'dependsOn')) f[A.work.deps] = links(p.dependsOn);
     if (has(p, 'partnerOwned')) f[A.work.partner] = !!p.partnerOwned;
+    if (has(p, 'category')) f[A.work.category] = p.category || null;
+    if (has(p, 'priority')) f[A.work.priority] = !!p.priority;
+    if (has(p, 'links')) f[A.work.links] = formatLinks(p.links);
+    // Keeping an attachment means sending its id back; anything left out is removed.
+    if (has(p, 'attachments')) f[A.work.attachments] = (p.attachments || []).map(a => ({ id: a.id }));
     if (p.manualDate === false) f[A.work.manualDue] = null;
     // A moved date is stored as a manual date. Dates that just follow Day 1 are left to Airtable's formula.
     if (has(p, 'due') && (p.manualDate === true || current.manualDate)) f[A.work.manualDue] = p.due || null;
@@ -362,6 +419,8 @@ export function createAirtableAdapter({ proxyUrl }) {
     if (has(p, 'driveUrl')) f[A.sessions.drive] = p.driveUrl || null;
     if (has(p, 'managerId')) f[A.sessions.manager] = link(p.managerId);
     if (has(p, 'status') && ['Not started', 'In progress', 'Complete'].includes(p.status)) f[A.sessions.status] = p.status;
+    if (has(p, 'pinned')) f[A.sessions.pinned] = !!p.pinned;
+    if (has(p, 'archived')) f[A.sessions.archived] = !!p.archived;
     // "instructors" is a linked table in Airtable; it is read-only here (edit instructors in Airtable).
     return f;
   };
@@ -379,6 +438,7 @@ export function createAirtableAdapter({ proxyUrl }) {
     if (has(p, 'types')) f[A.steps.types] = links(p.types);
     if (has(p, 'dependsOn')) f[A.steps.deps] = links(p.dependsOn);
     if (has(p, 'partnerOwned')) f[A.steps.partner] = !!p.partnerOwned;
+    if (has(p, 'category')) f[A.steps.category] = p.category || null;
     return f;
   };
   const userFields = p => {
@@ -450,7 +510,7 @@ export function createAirtableAdapter({ proxyUrl }) {
         const prog = programOf(r.programId) || {}, tpl = cache.TemplateTasks.find(t => t.id === real(r.templateId));
         const offset = tpl ? tpl.offset : (prog.day1 && r.due ? diffDays(r.due, prog.day1) : 0);
         return {
-          ...taskFields({ ...r, dependsOn: undefined }), [A.work.session]: link(r.programId), [A.work.step]: link(r.templateId),
+          ...taskFields({ ...r, dependsOn: undefined, attachments: undefined }), [A.work.session]: link(r.programId), [A.work.step]: link(r.templateId),
           [A.work.offset]: -offset, [A.work.manualDue]: r.manualDate ? r.due || null : null,
         };
       });
@@ -482,6 +542,16 @@ export function createAirtableAdapter({ proxyUrl }) {
     update: (table, id, patch) => queued(() => writeAll(patchToWrites(table, id, patch))),
     updateMany: (table, list) => queued(() => writeAll(list.flatMap(x => patchToWrites(table, x.id, x.patch)))),
     resolveId: id => real(id),
+    // Sends the file to the server, which uploads it to the task's Attachments field. Returns the task's full attachment list.
+    uploadAttachment: (taskId, file) => queued(async () => {
+      if (file.size > 3 * 1024 * 1024) throw new Error('Files must be 3 MB or smaller. For bigger files, add a Drive link instead.');
+      const recordId = real(taskId);
+      if (!isRec(recordId)) throw new Error('This task is still saving. Try again in a moment.');
+      const data = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(',')[1] || ''); r.onerror = () => rej(r.error); r.readAsDataURL(file); });
+      const j = await request(uploadUrl, { method: 'POST', body: { recordId, filename: file.name, contentType: file.type || 'application/octet-stream', file: data } });
+      const list = Object.values(j.fields || {}).find(Array.isArray) || [];
+      return list.map(a => ({ id: a.id, filename: a.filename, url: a.url, size: a.size, type: a.type }));
+    }),
     async reset() { throw new Error('Reset is only available with mock data'); },
   };
 }

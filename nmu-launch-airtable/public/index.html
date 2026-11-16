@@ -17,7 +17,7 @@
 <script src="./nmu-bundle.js"></script>
 <template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="#161826"></rect><rect x="30" y="30" width="40" height="40" rx="8" fill="none" stroke="#2340A8" stroke-width="3"></rect><text x="50" y="56" text-anchor="middle" font-family="Helvetica" font-size="13" font-weight="600" fill="#d2cefd">NMU</text></svg></template>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible+Next:wght@400;500;600;700&amp;family=Atkinson+Hyperlegible:wght@400;700&amp;display=swap">
-<style>body{margin:0;background:#FBF8F1;color:#14213D;font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-serif;font-size:14px} a{color:#1F3A9E;text-decoration:underline} a:hover{color:#142B7A} :focus-visible{outline:3px solid #2340A8;outline-offset:2px} input,select,textarea,button{font-family:inherit} button:disabled,select:disabled,input:disabled{cursor:not-allowed;opacity:.6} @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
+<style>body{margin:0;background:#FBF8F1;color:#14213D;font-family:'Atkinson Hyperlegible Next','Atkinson Hyperlegible',system-ui,sans-serif;font-size:14px} a{color:#1F3A9E;text-decoration:underline} a:hover{color:#142B7A} :focus-visible{outline:3px solid #2340A8;outline-offset:2px} .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap} input,select,textarea,button{font-family:inherit} button:disabled,select:disabled,input:disabled{cursor:not-allowed;opacity:.6} @media (prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}</style>
 </helmet>
 <div style="display:flex;min-height:100vh;background:#FBF8F1;color:#14213D;font-size:14px;line-height:1.5">
   <a href="#main" style="position:absolute;left:-9999px;top:8px;z-index:100;background:#14213D;color:#FFFFFF;padding:10px 16px;border-radius:8px;font-weight:600" style-focus="left:8px">Skip to main content</a>
@@ -60,6 +60,15 @@
             <sc-for list="{{ my.scopes }}" as="sc"><button onClick="{{ sc.go }}" aria-pressed="{{ sc.selected }}" style="border:0;border-radius:6px;padding:5px 12px;font-size:13.5px;cursor:pointer;white-space:nowrap;background:{{ sc.bg }};color:{{ sc.fg }}">{{ sc.label }}</button></sc-for>
           </div>
         </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin:-6px 0 18px">
+          <sc-for list="{{ my.stats }}" as="st"><button onClick="{{ st.go }}" aria-pressed="{{ st.selected }}" aria-label="{{ st.ariaLabel }}" style="text-align:left;padding:10px 14px;border-radius:10px;border:1px solid {{ st.border }};background:{{ st.bg }};cursor:pointer;display:flex;flex-direction:column;gap:0" style-hover="border-color:#2340A8"><span style="font-size:24px;font-weight:700;line-height:1.2;color:{{ st.fg }}">{{ st.n }}</span><span style="font-size:13px;color:#2E3A59">{{ st.label }}</span></button></sc-for>
+        </div>
+        <sc-if value="{{ my.hasFocus }}"><div style="display:flex;align-items:center;gap:10px;margin:-6px 0 16px;font-size:14px;color:#1A3A8F"><i aria-hidden="true" class="ph ph-funnel"></i>{{ my.focusLabel }}<button onClick="{{ my.clearFocus }}" style="background:transparent;border:0;color:#1F3A9E;text-decoration:underline;cursor:pointer;font-size:14px;padding:0">Show everything</button></div></sc-if>
+        <div style="margin:-4px 0 14px">
+          <div role="group" aria-label="Filter by activity type" style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ my.cats }}" as="c"><button onClick="{{ c.go }}" aria-pressed="{{ c.selected }}" aria-label="{{ c.ariaLabel }}" style="display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 10px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:#14213D;font-size:13px;font-weight:{{ c.weight }};cursor:pointer;white-space:nowrap;flex:none"><span aria-hidden="true" style="width:10px;height:10px;border-radius:3px;background:{{ c.dot }}"></span>{{ c.label }}<span style="color:#56627F;font-weight:400">{{ c.count }}</span></button></sc-for>
+          </div>
+        </div>
         <sc-if value="{{ my.hasProgFilters }}">
           <div role="group" aria-label="Filter my tasks by program" style="display:flex;flex-wrap:wrap;gap:8px;margin:-6px 0 20px">
             <sc-for list="{{ my.progFilters }}" as="pf">
@@ -85,14 +94,17 @@
         <sc-for list="{{ my.groups }}" as="g" hint-placeholder-count="2">
           <section style="margin-bottom:24px">
             <div style="display:flex;gap:8px;align-items:baseline;margin-bottom:8px">
+              <sc-if value="{{ g.flagIcon }}"><i aria-hidden="true" class="ph-fill ph-flag" style="color:#B3261E"></i></sc-if>
               <h2 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0;color:{{ g.color }}">{{ g.label }}</h2>
               <span style="font-size:13px;color:#56627F">{{ g.count }}</span>
             </div>
             <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
               <sc-for list="{{ g.tasks }}" as="t" hint-placeholder-count="3">
-                <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,150px) 104px 132px;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid #E7ECF4;cursor:pointer;background:#FFFFFF" style-hover="background:#F2F6FD">
+                <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,150px) 104px 132px;gap:12px;align-items:center;padding:9px 12px 9px 10px;border-bottom:1px solid #E7ECF4;border-left:4px solid {{ t.catBar }};cursor:pointer;background:{{ t.rowBg }}" style-hover="background:#F2F6FD">
                   <div style="min-width:0">
-                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0"><button onClick="{{ t.open }}" title="{{ t.name }}" style="text-wrap:pretty;background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;min-width:0">{{ t.name }}</button>
+                    <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0"><sc-if value="{{ t.priority }}"><i role="img" aria-label="Flagged as priority" class="ph-fill ph-flag" style="color:#B3261E;flex:none"></i></sc-if><button onClick="{{ t.open }}" title="{{ t.name }}" style="text-wrap:pretty;background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;min-width:0">{{ t.name }}</button>
+                      <span style="font-size:11.5px;font-weight:600;padding:1px 6px;border-radius:4px;background:{{ t.catBg }};color:{{ t.catFg }};flex:none">{{ t.category }}</span>
+                      <sc-if value="{{ t.hasFiles }}"><span title="{{ t.filesTitle }}" style="font-size:12px;color:#46526F;flex:none;display:inline-flex;gap:2px;align-items:center"><i aria-hidden="true" class="ph ph-paperclip"></i><span class="sr">attachments:</span>{{ t.fileCount }}</span></sc-if>
                       <sc-if value="{{ t.partnerOwned }}"><span style="font-size:12px;padding:1px 6px;border-radius:4px;border:1px solid #A9B5CC;color:#46526F;flex:none">Partner</span></sc-if>
                       <sc-if value="{{ t.waiting }}"><span title="{{ t.waitTitle }}" style="font-size:12px;color:#8A4600;flex:none;display:inline-flex;gap:3px;align-items:center"><i aria-hidden="true" class="ph ph-link"></i>{{ t.waitLabel }}</span></sc-if>
                     </div>
@@ -113,22 +125,48 @@
 
     <!-- ALL PROGRAMS -->
     <sc-if value="{{ isPrograms }}" hint-placeholder-val="{{ false }}">
-      <div data-screen-label="All Programs" style="padding:28px 32px 60px;max-width:1200px">
-        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px">
+      <div data-screen-label="All Programs" style="padding:28px 32px 60px;max-width:1240px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
           <div>
             <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Leadership view</div>
             <h1 style="font-size:26px;margin:2px 0 4px">All programs</h1>
             <div style="color:#46526F">{{ all.summary }}</div>
           </div>
-          <sc-if value="{{ canCreate }}"><button onClick="{{ goNew }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-plus"></i>New program</button></sc-if>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <sc-if value="{{ all.canExport }}"><button onClick="{{ all.exportCsv }}" title="Download the tasks of the programs shown, as a spreadsheet for Google Sheets or Excel" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-file-csv"></i>Export to Sheets</button></sc-if>
+            <sc-if value="{{ canCreate }}"><button onClick="{{ goNew }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-plus"></i>New program</button></sc-if>
+          </div>
         </div>
+        <div role="tablist" aria-label="Active or archived programs" style="display:flex;gap:22px;border-bottom:1px solid #E7ECF4;margin-bottom:14px">
+          <sc-for list="{{ all.tabs }}" as="tb"><button role="tab" onClick="{{ tb.go }}" aria-selected="{{ tb.selected }}" style="background:transparent;border:0;border-bottom:2px solid {{ tb.line }};color:{{ tb.fg }};font-weight:{{ tb.weight }};padding:0 0 9px;font-size:15px;cursor:pointer;white-space:nowrap;flex:none">{{ tb.label }} <span style="font-weight:400;color:#56627F">{{ tb.count }}</span></button></sc-for>
+        </div>
+        <sc-if value="{{ all.hasStates }}">
+          <div role="group" aria-label="Programs by state" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px">
+            <sc-for list="{{ all.states }}" as="sx"><button onClick="{{ sx.go }}" aria-pressed="{{ sx.selected }}" aria-label="{{ sx.ariaLabel }}" style="display:inline-flex;align-items:center;gap:8px;min-height:34px;padding:5px 14px;border-radius:999px;border:1px solid {{ sx.border }};background:{{ sx.bg }};color:{{ sx.fg }};font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none" style-hover="border-color:#2340A8">{{ sx.label }}<span style="font-weight:400;color:{{ sx.countFg }}">{{ sx.count }}</span></button></sc-for>
+          </div>
+        </sc-if>
+        <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;padding:12px 14px;background:#FFFFFF;border:1px solid #D5DCE8;border-radius:10px;margin-bottom:14px">
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59;flex:1;min-width:180px">Search<input type="search" value="{{ all.query }}" onChange="{{ all.onQuery }}" placeholder="Program, pool or partner" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Program type<select key="{{ all.typeKey }}" value="{{ all.type }}" onChange="{{ all.onType }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><option value="all">All types</option><sc-for list="{{ all.typeOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">City<select key="{{ all.cityKey }}" value="{{ all.city }}" onChange="{{ all.onCity }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><option value="all">All cities</option><sc-for list="{{ all.cityOpts }}" as="o"><option value="{{ o }}">{{ o }}</option></sc-for></select></label>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Day 1<select key="{{ all.dateKey }}" value="{{ all.date }}" onChange="{{ all.onDate }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><sc-for list="{{ all.dateOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></label>
+          <sc-if value="{{ all.isCustom }}">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">From<input type="date" value="{{ all.from }}" onChange="{{ all.onFrom }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">To<input type="date" value="{{ all.to }}" onChange="{{ all.onTo }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"></label>
+          </sc-if>
+          <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Sort<select key="{{ all.sortKey }}" value="{{ all.sort }}" onChange="{{ all.onSort }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><sc-for list="{{ all.sortOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select></label>
+          <sc-if value="{{ all.filtersOn }}"><button onClick="{{ all.clear }}" style="background:transparent;border:0;color:#1F3A9E;text-decoration:underline;font-size:14px;cursor:pointer;padding:8px 4px;white-space:nowrap;flex:none">Clear filters</button></sc-if>
+        </div>
+        <div style="font-size:13px;color:#56627F;margin-bottom:8px;display:flex;gap:6px;align-items:center"><i aria-hidden="true" class="ph-fill ph-star" style="color:#B07A00"></i>Pinned programs stay at the top for everyone. Click a star to pin or unpin.</div>
+        <sc-if value="{{ all.empty }}"><div style="padding:24px;border:1px dashed #8792AC;border-radius:8px;color:#46526F">{{ all.emptyText }}</div></sc-if>
         <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:auto">
-          <div style="display:grid;grid-template-columns:minmax(220px,1.6fr) 90px 150px minmax(140px,1fr) 70px 70px minmax(180px,1.2fr) 96px;gap:12px;padding:8px 14px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#56627F;border-bottom:1px solid #8792AC;min-width:1040px">
-            <div>Program</div><div>Type</div><div>Day 1</div><div>Progress</div><div>Overdue</div><div>Blocked</div><div>Next up</div><div>Health</div>
+          <div style="display:grid;grid-template-columns:36px minmax(220px,1.6fr) 72px 120px minmax(130px,1fr) 64px 64px minmax(170px,1.2fr) 100px;gap:12px;padding:8px 14px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#56627F;border-bottom:1px solid #8792AC;min-width:1080px">
+            <div><span class="sr">Pin</span></div><div>Program</div><div>Type</div><div>Day 1</div><div>Progress</div><div>Overdue</div><div>Blocked</div><div>Next up</div><div>Health</div>
           </div>
           <sc-for list="{{ all.rows }}" as="p" hint-placeholder-count="4">
-            <div onClick="{{ p.open }}" style="display:grid;grid-template-columns:minmax(220px,1.6fr) 90px 150px minmax(140px,1fr) 70px 70px minmax(180px,1.2fr) 96px;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;cursor:pointer;min-width:1040px" style-hover="background:#F2F6FD">
-              <div style="min-width:0"><button onClick="{{ p.open }}" style="background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;white-space:nowrap;flex:none">{{ p.name }}</button><div style="font-size:13px;color:#56627F">{{ p.location }}</div></div>
+            <div onClick="{{ p.open }}" style="display:grid;grid-template-columns:36px minmax(220px,1.6fr) 72px 120px minmax(130px,1fr) 64px 64px minmax(170px,1.2fr) 100px;gap:12px;align-items:center;padding:12px 14px;border-bottom:1px solid #E7ECF4;background:#FFFFFF;cursor:pointer;min-width:1080px" style-hover="background:#F2F6FD">
+              <div><sc-if value="{{ p.canPin }}"><button onClick="{{ p.pin }}" aria-pressed="{{ p.pinned }}" aria-label="{{ p.pinLabel }}" title="{{ p.pinLabel }}" style="background:transparent;border:0;cursor:pointer;padding:4px;border-radius:6px;font-size:19px;color:{{ p.pinColor }};line-height:1" style-hover="background:#FCF0D4"><i aria-hidden="true" class="{{ p.pinIcon }}"></i></button></sc-if></div>
+              <div style="min-width:0"><button onClick="{{ p.open }}" style="background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer">{{ p.name }}</button><div style="font-size:13px;color:#56627F">{{ p.location }}</div></div>
               <div><span style="font-size:12px;padding:2px 7px;border-radius:4px;background:#E7ECF4;color:#2E3A59">{{ p.typeCode }}</span></div>
               <div><div>{{ p.day1Label }}</div><div style="font-size:12.5px;color:#56627F">{{ p.countdown }}</div></div>
               <div><div role="progressbar" aria-valuenow="{{ p.pct }}" aria-valuemin="0" aria-valuemax="100" aria-label="{{ p.pctLabel }}" style="height:6px;border-radius:3px;background:#E7ECF4;overflow:hidden"><div style="height:100%;width:{{ p.pctW }};background:#2340A8"></div></div><div style="font-size:12.5px;color:#56627F;margin-top:4px">{{ p.doneLabel }}</div></div>
@@ -154,18 +192,46 @@
           </div>
           <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap">
             <div style="text-align:right"><div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Day 1</div><div style="font-size:18px;font-weight:500">{{ pg.day1Long }}</div><div style="font-size:13px;color:#56627F">{{ pg.countdown }}</div></div>
-            <sc-if value="{{ canEdit }}"><button onClick="{{ openResched }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-calendar-dots"></i>Move Day 1</button></sc-if>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <sc-if value="{{ pg.canPin }}"><button onClick="{{ pg.pin }}" aria-pressed="{{ pg.pinned }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap;color:#734A00" style-hover="background:#FCF0D4"><i aria-hidden="true" class="{{ pg.pinIcon }}" style="color:#B07A00"></i>{{ pg.pinLabel }}</button></sc-if>
+              <button onClick="{{ pg.exportCsv }}" title="Download this program's tasks as a spreadsheet" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-file-csv"></i>Export</button>
+              <sc-if value="{{ pg.canArchive }}"><button onClick="{{ pg.archive }}" title="Hide from active lists. Tasks and history are kept." style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap;color:#2E3A59" style-hover="background:#E7ECF4"><i aria-hidden="true" class="ph ph-archive"></i>Archive</button></sc-if>
+            </div>
+            <sc-if value="{{ pg.edit }}"><button onClick="{{ openResched }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-calendar-dots"></i>Move Day 1</button></sc-if>
           </div>
         </div>
+        <sc-if value="{{ pg.archived }}">
+          <div role="status" style="display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:12px 16px;border:1px solid #A9B5CC;background:#F1F3F7;border-radius:10px;margin-bottom:14px">
+            <div style="display:flex;gap:10px;align-items:flex-start"><i aria-hidden="true" class="ph ph-archive" style="font-size:20px;color:#46526F;margin-top:1px"></i><div><div style="font-weight:700">This program is archived</div><div style="font-size:13.5px;color:#46526F">It's kept for reference: every task, file, note and change is preserved. Restore it to make changes.</div></div></div>
+            <sc-if value="{{ pg.canRestore }}"><button onClick="{{ pg.restore }}" style="background:#2340A8;border:1px solid #2340A8;color:#FFFFFF;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#142B7A"><i aria-hidden="true" class="ph ph-arrow-counter-clockwise"></i>Restore</button></sc-if>
+          </div>
+        </sc-if>
         <div style="display:flex;gap:18px;align-items:center;padding:10px 0 0;margin-bottom:16px;border-bottom:1px solid #E7ECF4">
           <sc-for list="{{ pg.tabs }}" as="tb"><button onClick="{{ tb.go }}" aria-pressed="{{ tb.selected }}" style="background:transparent;border:0;border-bottom:2px solid {{ tb.line }};color:{{ tb.fg }};padding:0 0 9px;font-size:14px;cursor:pointer;white-space:nowrap;flex:none">{{ tb.label }}</button></sc-for>
           <div style="margin-left:auto;font-size:13px;color:#56627F;padding-bottom:9px">{{ pg.doneLabel }}</div>
         </div>
 
         <sc-if value="{{ pg.isTimeline }}" hint-placeholder-val="{{ false }}">
-          <sc-if value="{{ canEdit }}">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
-              <sc-if value="{{ addNoForm }}"><button onClick="{{ openAddTask }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none" style-hover="background:#E7ECF4"><i aria-hidden="true" class="ph ph-plus"></i>Add task</button></sc-if>
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <div role="group" aria-label="Filter by activity type" style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ pg.cats }}" as="c"><button onClick="{{ c.go }}" aria-pressed="{{ c.selected }}" aria-label="{{ c.ariaLabel }}" style="display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 10px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:#14213D;font-size:13px;font-weight:{{ c.weight }};cursor:pointer;white-space:nowrap;flex:none"><span aria-hidden="true" style="width:10px;height:10px;border-radius:3px;background:{{ c.dot }}"></span>{{ c.label }}<span style="color:#56627F;font-weight:400">{{ c.count }}</span></button></sc-for>
+          </div>
+            <div style="display:flex;gap:8px">
+              <sc-if value="{{ bk.canSelectShown }}"><button onClick="{{ bk.selectShown }}" title="Select every task shown, to change them together" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none" style-hover="background:#E7ECF4"><i aria-hidden="true" class="ph ph-check-square-offset"></i>Select shown</button></sc-if>
+              <sc-if value="{{ pg.edit }}"><sc-if value="{{ addNoForm }}"><button onClick="{{ openAddTask }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;flex:none" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-plus"></i>Add task</button></sc-if></sc-if>
+            </div>
+          </div>
+          <sc-if value="{{ bk.has }}">
+            <div role="region" aria-label="Change selected tasks" style="position:sticky;top:0;z-index:5;display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 12px;margin-bottom:12px;border:1px solid #2340A8;background:#F2F6FD;border-radius:10px;box-shadow:0 6px 16px -10px rgba(20,33,61,.4)">
+              <strong style="font-size:14px;margin-right:4px">{{ bk.label }}</strong>
+              <select aria-label="Set status for selected tasks" key="bks" value="" onChange="{{ bk.onStatus }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px"><option value="">Status…</option><option>Not started</option><option>In progress</option><option>Blocked</option><option>Done</option></select>
+              <select aria-label="Set owner for selected tasks" key="bko" value="" onChange="{{ bk.onOwner }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px;max-width:180px"><option value="">Owner…</option><option value="-">Unassigned</option><sc-for list="{{ bk.ownerOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select>
+              <select aria-label="Set activity type for selected tasks" key="bkc" value="" onChange="{{ bk.onCat }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px"><option value="">Type…</option><sc-for list="{{ bk.cats }}" as="c"><option>{{ c }}</option></sc-for></select>
+              <span style="display:inline-flex;gap:4px;align-items:center;font-size:13.5px">Move <input type="number" aria-label="Days to move selected tasks (negative moves earlier)" value="{{ bk.shift }}" onChange="{{ bk.onShift }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px;width:64px"> days <button onClick="{{ bk.applyShift }}" style="background:#FFFFFF;border:1px solid #2340A8;color:#1F3A9E;border-radius:6px;padding:5px 10px;font-size:13.5px;cursor:pointer">Apply</button></span>
+              <label style="display:inline-flex;gap:4px;align-items:center;font-size:13.5px">Due on <input type="date" aria-label="Set one due date for selected tasks" value="" onChange="{{ bk.onDate }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px"></label>
+              <button onClick="{{ bk.flag }}" style="background:#FFFFFF;border:1px solid #B3261E;color:#B3261E;border-radius:6px;padding:5px 10px;font-size:13.5px;cursor:pointer;display:inline-flex;gap:4px;align-items:center"><i aria-hidden="true" class="ph-fill ph-flag"></i>Flag</button>
+              <button onClick="{{ bk.unflag }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#2E3A59;border-radius:6px;padding:5px 10px;font-size:13.5px;cursor:pointer">Unflag</button>
+              <button onClick="{{ bk.clear }}" style="margin-left:auto;background:transparent;border:0;color:#1F3A9E;text-decoration:underline;font-size:13.5px;cursor:pointer">Clear selection</button>
             </div>
           </sc-if>
           <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px">
@@ -173,12 +239,22 @@
             <sc-if value="{{ pg.hasHidden }}"><button onClick="{{ pg.toggleAll }}" aria-expanded="{{ pg.showAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;flex:none;white-space:nowrap" style-hover="background:#E4ECFC">{{ pg.allLabel }}</button></sc-if>
           </div>
           <sc-if value="{{ addOpen }}">
-            <div style="display:grid;grid-template-columns:minmax(0,2fr) 150px 190px auto auto;gap:8px;align-items:end;padding:12px;border:1px solid #9DB4EC;border-radius:8px;margin-bottom:16px;background:#FFFFFF">
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Additional task<input value="{{ addT.name }}" onChange="{{ addT.onName }}" placeholder="e.g. Confirm parking passes for instructors" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"></label>
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Due<input type="date" value="{{ addT.due }}" onChange="{{ addT.onDue }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:5px 8px;font-size:14px"></label>
-              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Role<select key="{{ addT.role }}" value="{{ addT.role }}" onChange="{{ addT.onRole }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"><sc-for list="{{ roles }}" as="r"><option>{{ r }}</option></sc-for></select></label>
-              <button onClick="{{ cancelAddTask }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:6px 12px;font-size:13.5px;cursor:pointer;white-space:nowrap;flex:none">Cancel</button>
-              <button onClick="{{ saveAddTask }}" disabled="{{ addT.invalid }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#E4ECFC">Add</button>
+            <div role="group" aria-label="Add a task" style="display:flex;flex-direction:column;gap:12px;padding:14px;border:1px solid #9DB4EC;border-radius:10px;margin-bottom:16px;background:#FFFFFF">
+              <div style="display:grid;grid-template-columns:minmax(0,2fr) 150px;gap:10px">
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Task title<input list="task-titles" value="{{ addT.name }}" onChange="{{ addT.onName }}" placeholder="Start typing, e.g. Confirm parking passes" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><span style="font-weight:400;color:#56627F">{{ addT.knownNote }}</span></label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Due<input type="date" value="{{ addT.due }}" onChange="{{ addT.onDue }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"></label>
+              </div>
+              <datalist id="task-titles"><sc-for list="{{ titles }}" as="tt"><option value="{{ tt }}"></option></sc-for></datalist>
+              <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Details (optional)<textarea value="{{ addT.details }}" onChange="{{ addT.onDetails }}" rows="2" placeholder="Anything specific for this program: who to contact, what's different this time" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400;resize:vertical"></textarea></label>
+              <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Owner role<select key="{{ addT.roleKey }}" value="{{ addT.role }}" onChange="{{ addT.onRole }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><sc-for list="{{ roles }}" as="r"><option>{{ r }}</option></sc-for></select></label>
+                <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;font-weight:600;color:#2E3A59">Activity type<select key="{{ addT.catKey }}" value="{{ addT.category }}" onChange="{{ addT.onCat }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-weight:400"><sc-for list="{{ bk.cats }}" as="c"><option>{{ c }}</option></sc-for></select></label>
+                <label style="display:flex;gap:8px;align-items:center;font-size:14px;cursor:pointer;padding:8px 0"><input type="checkbox" checked="{{ addT.priority }}" onChange="{{ addT.onPriority }}" style="accent-color:#B3261E;width:17px;height:17px">Flag as priority</label>
+                <div style="margin-left:auto;display:flex;gap:8px">
+                  <button onClick="{{ cancelAddTask }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:8px;padding:7px 14px;font-size:14px;cursor:pointer;white-space:nowrap;flex:none">Cancel</button>
+                  <button onClick="{{ saveAddTask }}" disabled="{{ addT.invalid }}" style="background:#2340A8;border:1px solid #2340A8;color:#FFFFFF;border-radius:8px;padding:7px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#142B7A">Add task</button>
+                </div>
+              </div>
             </div>
           </sc-if>
           <sc-for list="{{ pg.phases }}" as="ph" hint-placeholder-count="3">
@@ -190,9 +266,12 @@
               </button>
               <div style="border:{{ ph.border }};border-radius:8px;overflow:hidden">
                 <sc-for list="{{ ph.tasks }}" as="t" hint-placeholder-count="3">
-                  <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,150px) 104px 132px;gap:12px;align-items:center;padding:9px 12px;border-bottom:1px solid #E7ECF4;cursor:pointer;background:#FFFFFF" style-hover="background:#F2F6FD">
+                  <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:{{ pg.cols }};gap:12px;align-items:center;padding:9px 12px 9px 10px;border-bottom:1px solid #E7ECF4;border-left:4px solid {{ t.catBar }};cursor:pointer;background:{{ t.rowBg }}" style-hover="background:#F2F6FD">
+                    <sc-if value="{{ pg.edit }}"><input type="checkbox" checked="{{ t.checked }}" onClick="{{ stop }}" onChange="{{ t.onCheck }}" aria-label="{{ t.checkLabel }}" style="accent-color:#2340A8;width:16px;height:16px;margin:0;cursor:pointer"></sc-if>
                     <div style="min-width:0">
-                      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0"><button onClick="{{ t.open }}" title="{{ t.name }}" style="text-wrap:pretty;background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;min-width:0">{{ t.name }}</button>
+                      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;min-width:0"><sc-if value="{{ t.priority }}"><i role="img" aria-label="Flagged as priority" class="ph-fill ph-flag" style="color:#B3261E;flex:none"></i></sc-if><button onClick="{{ t.open }}" title="{{ t.name }}" style="text-wrap:pretty;background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer;min-width:0">{{ t.name }}</button>
+                      <span style="font-size:11.5px;font-weight:600;padding:1px 6px;border-radius:4px;background:{{ t.catBg }};color:{{ t.catFg }};flex:none">{{ t.category }}</span>
+                      <sc-if value="{{ t.hasFiles }}"><span title="{{ t.filesTitle }}" style="font-size:12px;color:#46526F;flex:none;display:inline-flex;gap:2px;align-items:center"><i aria-hidden="true" class="ph ph-paperclip"></i><span class="sr">attachments:</span>{{ t.fileCount }}</span></sc-if>
                         <sc-if value="{{ t.partnerOwned }}"><span style="font-size:12px;padding:1px 6px;border-radius:4px;border:1px solid #A9B5CC;color:#46526F;flex:none">Partner</span></sc-if>
                         <sc-if value="{{ t.waiting }}"><span title="{{ t.waitTitle }}" style="font-size:12px;color:#8A4600;flex:none;display:inline-flex;gap:3px;align-items:center"><i aria-hidden="true" class="ph ph-link"></i>{{ t.waitLabel }}</span></sc-if>
                       </div>
@@ -206,7 +285,7 @@
               </div>
             </section>
           </sc-for>
-          <sc-if value="{{ pg.noVisible }}"><div style="padding:20px;border:1px dashed #A9B5CC;border-radius:8px;color:#46526F;margin-bottom:16px">No open tasks due in the next 30 days.</div></sc-if>
+          <sc-if value="{{ pg.noVisible }}"><div style="padding:20px;border:1px dashed #A9B5CC;border-radius:8px;color:#46526F;margin-bottom:16px">{{ pg.noVisibleText }}</div></sc-if>
           <sc-if value="{{ pg.hasHidden }}"><button onClick="{{ pg.toggleAll }}" aria-expanded="{{ pg.showAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="{{ pg.allIcon }}"></i>{{ pg.allLabel }}</button></sc-if>
         </sc-if>
 
@@ -220,9 +299,16 @@
                 </sc-for>
               </div>
               <div style="display:flex;gap:8px;margin-top:12px;align-items:center">
-                <sc-if value="{{ canEdit }}"><button onClick="{{ editSite }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-pencil-simple"></i>Edit site details</button></sc-if>
+                <sc-if value="{{ pg.edit }}"><button onClick="{{ editSite }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:500;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap;flex:none" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-pencil-simple"></i>Edit site details</button></sc-if>
                 <sc-if value="{{ pg.hasDrive }}"><a href="{{ pg.driveUrl }}" target="_blank" style="font-size:13.5px;display:inline-flex;gap:4px;align-items:center"><i aria-hidden="true" class="ph ph-folder-simple"></i>Open shared Drive folder</a></sc-if>
               </div>
+              <h2 style="font-size:16px;margin:26px 0 8px">{{ pg.filesLabel }}</h2>
+              <sc-if value="{{ pg.hasFiles }}">
+                <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
+                  <sc-for list="{{ pg.files }}" as="f"><div style="display:flex;gap:10px;align-items:center;padding:9px 12px;border-bottom:1px solid #E7ECF4;background:#FFFFFF"><i aria-hidden="true" class="{{ f.icon }}" style="color:#46526F"></i><div style="min-width:0;flex:1"><a href="{{ f.url }}" target="_blank" rel="noopener" style="font-weight:600;word-break:break-word">{{ f.name }}</a><div style="font-size:12.5px;color:#56627F">{{ f.meta }} · on <button onClick="{{ f.open }}" style="background:transparent;border:0;padding:0;color:#1F3A9E;text-decoration:underline;cursor:pointer;font-size:12.5px">{{ f.task }}</button></div></div></div></sc-for>
+                </div>
+              </sc-if>
+              <sc-if value="{{ pg.noFiles }}"><div style="font-size:14px;color:#56627F">No files or links yet. Open any task to attach a PDF or add a link.</div></sc-if>
             </sc-if>
             <sc-if value="{{ siteEdit }}">
               <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
@@ -268,7 +354,12 @@
           <div style="display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) minmax(0,1fr);gap:12px;margin-bottom:22px">
             <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Program name<input value="{{ w.name }}" onChange="{{ w.on.name }}" placeholder="e.g. WSU Swim Safely Series" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"></label>
             <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Location<input value="{{ w.location }}" onChange="{{ w.on.location }}" placeholder="Pool, city, state" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"></label>
-            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Day 1 (start date)<input type="date" value="{{ w.day1 }}" onChange="{{ w.on.day1 }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 10px;font-size:15px"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Day 1 (start date)<input type="date" min="{{ w.minDay1 }}" value="{{ w.day1 }}" onChange="{{ w.on.day1 }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 10px;font-size:15px"></label>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,2fr) 140px minmax(0,2fr);gap:12px;margin:-10px 0 22px">
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">City<input value="{{ w.city }}" onChange="{{ w.on.city }}" placeholder="e.g. Seattle" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"></label>
+            <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">State<select key="{{ w.stateKey }}" value="{{ w.state }}" onChange="{{ w.on.state }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:15px"><option value="">Choose…</option><sc-for list="{{ w.stateOpts }}" as="o"><option>{{ o }}</option></sc-for></select></label>
+            <div style="font-size:13px;color:{{ w.day1NoteColor }};align-self:end;padding-bottom:9px">{{ w.day1Note }}</div>
           </div>
           <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F;margin-bottom:8px">Site-type profile</div>
           <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px">
@@ -297,7 +388,7 @@
             <div style="color:#46526F;font-size:13.5px">{{ w.draftMeta }}</div>
           </div>
           <div style="color:#56627F;font-size:13.5px;margin-bottom:12px">Draft — uncheck tasks that don't apply or adjust dates before creating. Nothing is saved until you create the program.</div>
-          <sc-if value="{{ w.hasPast }}"><div style="padding:9px 12px;border:1px solid #E3B77A;background:#FFF6E8;border-radius:8px;color:#7A3E00;font-size:13.5px;margin-bottom:14px;display:flex;gap:8px;align-items:center"><i aria-hidden="true" class="ph ph-warning"></i>{{ w.pastLabel }}</div></sc-if>
+          <sc-if value="{{ w.hasPast }}"><div style="padding:10px 12px;border:1px solid #E3B77A;background:#FFF6E8;border-radius:8px;color:#7A3E00;font-size:13.5px;margin-bottom:14px;display:flex;flex-direction:column;gap:8px"><div style="display:flex;gap:8px;align-items:center"><i aria-hidden="true" class="ph ph-warning"></i>{{ w.pastLabel }}</div><label style="display:flex;gap:8px;align-items:center;cursor:pointer;color:#14213D"><input type="checkbox" checked="{{ w.markPastDone }}" onChange="{{ w.togglePast }}" style="accent-color:#2340A8;width:16px;height:16px">{{ w.markPastLabel }}</label></div></sc-if>
           <sc-for list="{{ w.phases }}" as="ph">
             <section style="margin-bottom:16px">
               <h2 style="font-size:13px;letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px;color:#2E3A59">{{ ph.label }}</h2>
@@ -376,6 +467,7 @@
                     <div style="min-width:0">
                       <div style="font-weight:600;text-wrap:pretty">{{ r.name }}</div>
                       <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:4px">
+                        <span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:{{ r.catBg }};color:{{ r.catFg }}">{{ r.category }}</span>
                         <sc-if value="{{ r.partner }}"><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#FFF1DE;color:#7A3E00">Partner site does this</span></sc-if>
                         <sc-if value="{{ r.onlyHere }}"><span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;background:#E4ECFC;color:#1A3A8F">Only in {{ tp.selName }}</span></sc-if>
                         <sc-if value="{{ r.hasWaits }}"><span style="font-size:12px;color:#46526F;display:inline-flex;gap:4px;align-items:center"><i aria-hidden="true" class="ph ph-link"></i>Waits on: {{ r.waits }}</span></sc-if>
@@ -433,6 +525,7 @@
               <div style="font-size:14px;color:#1A3A8F;background:#F2F6FD;border-radius:8px;padding:8px 10px">{{ te.preview }}</div>
             </fieldset>
             <label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:#2E3A59">Who usually owns it?<select key="{{ te.roleKey }}" value="{{ te.role }}" onChange="{{ te.onRole }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;font-weight:400"><sc-for list="{{ roles }}" as="ro"><option>{{ ro }}</option></sc-for></select><span style="font-size:13px;font-weight:400;color:#56627F">If exactly one active person has this role, they're assigned automatically.</span></label>
+            <label style="display:flex;flex-direction:column;gap:5px;font-size:13.5px;font-weight:600;color:#2E3A59">Activity type<select key="{{ te.catKey }}" value="{{ te.category }}" onChange="{{ te.onCat }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:8px 10px;font-size:14px;font-weight:400"><sc-for list="{{ te.cats }}" as="c"><option>{{ c }}</option></sc-for></select><span style="font-size:13px;font-weight:400;color:#56627F">Tasks are color-coded by type. New programs copy this; programs already underway keep theirs.</span></label>
             <label style="display:flex;gap:10px;align-items:flex-start;font-size:14px;cursor:pointer"><input type="checkbox" checked="{{ te.partnerOwned }}" onChange="{{ te.onPartner }}" style="accent-color:#2340A8;width:18px;height:18px;margin:1px 0 0"><span><strong>The partner site does this task</strong><br><span style="color:#56627F;font-size:13px">It appears in the partner portal, and the site contact gets reminders.</span></span></label>
             <fieldset style="border:0;padding:0;margin:0">
               <legend style="font-size:13.5px;font-weight:600;color:#2E3A59;padding:0;margin-bottom:8px">Include in these program types</legend>
@@ -459,6 +552,89 @@
           </div>
         </div>
       </sc-if>
+    </sc-if>
+
+    <!-- CALENDAR -->
+    <sc-if value="{{ isCalendar }}" hint-placeholder-val="{{ false }}">
+      <div data-screen-label="Calendar" style="padding:28px 32px 60px;max-width:1240px">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:16px">
+          <div>
+            <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">Schedule</div>
+            <h1 style="font-size:26px;margin:2px 0 4px">Calendar</h1>
+            <div style="color:#46526F">{{ cal.summary }}</div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button onClick="{{ cal.ics }}" title="Download a calendar file you can import into Google Calendar or Outlook" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-download-simple"></i>Download .ics</button>
+            <button onClick="{{ cal.openSub }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap" style-hover="background:#E4ECFC"><i aria-hidden="true" class="ph ph-google-logo"></i>Add to Google Calendar</button>
+          </div>
+        </div>
+        <sc-if value="{{ cal.sub }}">
+          <div role="region" aria-label="Add to Google Calendar" style="padding:16px 18px;border:1px solid #9DB4EC;background:#F2F6FD;border-radius:10px;margin-bottom:16px;display:flex;flex-direction:column;gap:10px">
+            <div style="display:flex;justify-content:space-between;gap:12px;align-items:flex-start"><div style="font-weight:700;font-size:15px">Subscribe in Google Calendar</div><button onClick="{{ cal.closeSub }}" aria-label="Close" style="background:transparent;border:0;color:#46526F;font-size:18px;cursor:pointer;padding:2px 6px"><i aria-hidden="true" class="ph ph-x"></i></button></div>
+            <sc-if value="{{ cal.live }}">
+              <ol style="margin:0;padding-left:20px;font-size:14px;color:#2E3A59;line-height:1.7">
+                <li>Copy one of the links below.</li>
+                <li>In Google Calendar, click <strong>+</strong> next to "Other calendars", then <strong>From URL</strong>.</li>
+                <li>Paste the link and click <strong>Add calendar</strong>. Google refreshes it every few hours.</li>
+              </ol>
+              <div style="display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:8px;align-items:center">
+                <span style="font-size:13.5px;font-weight:600">My tasks</span><input readonly value="{{ cal.feedMine }}" aria-label="Calendar link for my tasks" onFocus="{{ selectAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"><button onClick="{{ cal.copyMine }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap">Copy</button>
+                <span style="font-size:13.5px;font-weight:600">All programs</span><input readonly value="{{ cal.feedAll }}" aria-label="Calendar link for all programs" onFocus="{{ selectAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px;font-family:ui-monospace,Menlo,monospace;font-size:12.5px"><button onClick="{{ cal.copyAll }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap">Copy</button>
+              </div>
+              <sc-if value="{{ cal.hasPasscode }}"><div style="font-size:13px;color:#7A3E00">These links include the team passcode. Share them only with your team.</div></sc-if>
+            </sc-if>
+            <sc-if value="{{ cal.mock }}"><div style="font-size:14px;color:#2E3A59">Live subscription links work on the deployed site, where tasks come from Airtable. In this sample-data mode, use <strong>Download .ics</strong> and import the file in Google Calendar (Settings → Import &amp; export).</div></sc-if>
+          </div>
+        </sc-if>
+        <div style="display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px">
+          <div style="display:flex;gap:6px;align-items:center">
+            <button onClick="{{ cal.prev }}" aria-label="Previous month" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap;padding:7px 10px"><i aria-hidden="true" class="ph ph-caret-left"></i></button>
+            <h2 aria-live="polite" style="font-size:19px;margin:0 8px;min-width:170px;text-align:center">{{ cal.monthLabel }}</h2>
+            <button onClick="{{ cal.next }}" aria-label="Next month" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap;padding:7px 10px"><i aria-hidden="true" class="ph ph-caret-right"></i></button>
+            <button onClick="{{ cal.today }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#1F3A9E;border-radius:8px;padding:7px 14px;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:6px;flex:none;white-space:nowrap">Today</button>
+          </div>
+          <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap">
+            <select aria-label="Program" key="{{ cal.progKey }}" value="{{ cal.program }}" onChange="{{ cal.onProgram }}" style="background:#FFFFFF;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:7px 9px;font-size:14px"><option value="all">All active programs</option><sc-for list="{{ cal.progOpts }}" as="o"><option value="{{ o.id }}">{{ o.name }}</option></sc-for></select>
+            <sc-if value="{{ cal.canMine }}"><label style="display:flex;gap:6px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" checked="{{ cal.mine }}" onChange="{{ cal.toggleMine }}" style="accent-color:#2340A8;width:16px;height:16px">Only my tasks</label></sc-if>
+            <label style="display:flex;gap:6px;align-items:center;font-size:14px;cursor:pointer"><input type="checkbox" checked="{{ cal.showDone }}" onChange="{{ cal.toggleDone }}" style="accent-color:#2340A8;width:16px;height:16px">Show completed</label>
+          </div>
+        </div>
+        <div style="margin-bottom:12px"><div role="group" aria-label="Filter by activity type" style="display:flex;flex-wrap:wrap;gap:6px">
+            <sc-for list="{{ cal.cats }}" as="c"><button onClick="{{ c.go }}" aria-pressed="{{ c.selected }}" aria-label="{{ c.ariaLabel }}" style="display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 10px;border-radius:999px;border:1px solid {{ c.border }};background:{{ c.bg }};color:#14213D;font-size:13px;font-weight:{{ c.weight }};cursor:pointer;white-space:nowrap;flex:none"><span aria-hidden="true" style="width:10px;height:10px;border-radius:3px;background:{{ c.dot }}"></span>{{ c.label }}<span style="color:#56627F;font-weight:400">{{ c.count }}</span></button></sc-for>
+          </div></div>
+        <div style="border:1px solid #D5DCE8;border-radius:10px;overflow:hidden;background:#FFFFFF">
+          <div aria-hidden="true" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));background:#F4F6FA;border-bottom:1px solid #D5DCE8;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#56627F">
+            <div style="padding:7px 8px">Sun</div><div style="padding:7px 8px">Mon</div><div style="padding:7px 8px">Tue</div><div style="padding:7px 8px">Wed</div><div style="padding:7px 8px">Thu</div><div style="padding:7px 8px">Fri</div><div style="padding:7px 8px">Sat</div>
+          </div>
+          <sc-for list="{{ cal.weeks }}" as="wk">
+            <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr))">
+              <sc-for list="{{ wk.days }}" as="dy">
+                <div style="min-height:108px;padding:5px;border-right:1px solid #EEF1F6;border-bottom:1px solid #EEF1F6;background:{{ dy.bg }};display:flex;flex-direction:column;gap:3px;min-width:0">
+                  <button onClick="{{ dy.select }}" aria-label="{{ dy.aria }}" style="align-self:flex-start;border:0;background:{{ dy.numBg }};color:{{ dy.numFg }};border-radius:999px;min-width:26px;height:26px;font-size:13px;font-weight:600;cursor:pointer;padding:0 7px">{{ dy.num }}</button>
+                  <sc-for list="{{ dy.items }}" as="it"><button onClick="{{ it.open }}" title="{{ it.title }}" style="text-align:left;border:0;border-left:3px solid {{ it.bar }};background:{{ it.bg }};color:{{ it.fg }};text-decoration:{{ it.deco }};border-radius:4px;padding:2px 6px;font-size:12px;line-height:1.35;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%">{{ it.label }}</button></sc-for>
+                  <sc-if value="{{ dy.hasMore }}"><button onClick="{{ dy.select }}" style="align-self:flex-start;border:0;background:transparent;color:#1F3A9E;font-size:12px;font-weight:600;cursor:pointer;padding:1px 4px">+{{ dy.more }} more</button></sc-if>
+                </div>
+              </sc-for>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12.5px;color:#46526F;margin-top:8px"><span style="display:inline-flex;gap:5px;align-items:center"><span aria-hidden="true" style="width:12px;height:12px;border-radius:3px;background:#14213D"></span>Program Day 1</span><span style="display:inline-flex;gap:5px;align-items:center"><span aria-hidden="true" style="width:4px;height:12px;background:#8A4600"></span>Orange edge: overdue</span><span>⚑ Flagged priority</span><span>Click a date to see everything due that day.</span></div>
+        <sc-if value="{{ cal.hasDay }}">
+          <section aria-label="Tasks on the selected day" style="margin-top:18px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><h2 style="font-size:16px;margin:0">{{ cal.dayLabel }}</h2><button onClick="{{ cal.closeDay }}" style="background:transparent;border:0;color:#1F3A9E;text-decoration:underline;cursor:pointer;font-size:14px">Close</button></div>
+            <sc-if value="{{ cal.dayEmpty }}"><div style="padding:16px;border:1px dashed #A9B5CC;border-radius:8px;color:#46526F">Nothing due this day with the current filters.</div></sc-if>
+            <div style="border:1px solid #E7ECF4;border-radius:8px;overflow:hidden">
+              <sc-for list="{{ cal.dayTasks }}" as="t">
+                <div onClick="{{ t.open }}" style="display:grid;grid-template-columns:minmax(0,1fr) minmax(110px,170px) 132px;gap:12px;align-items:center;padding:9px 12px 9px 10px;border-bottom:1px solid #E7ECF4;border-left:4px solid {{ t.catBar }};cursor:pointer;background:{{ t.rowBg }}" style-hover="background:#F2F6FD">
+                  <div style="min-width:0"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap"><sc-if value="{{ t.priority }}"><i role="img" aria-label="Flagged as priority" class="ph-fill ph-flag" style="color:#B3261E"></i></sc-if><button onClick="{{ t.open }}" style="background:transparent;border:0;padding:0;color:inherit;font:inherit;font-weight:600;text-align:left;cursor:pointer">{{ t.name }}</button><span style="font-size:11.5px;font-weight:600;padding:1px 6px;border-radius:4px;background:{{ t.catBg }};color:{{ t.catFg }}">{{ t.category }}</span></div><div style="font-size:13px;color:#56627F">{{ t.sub }}</div></div>
+                  <div style="font-size:13.5px;color:{{ t.ownerColor }};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.ownerName }}</div>
+                  <select value="{{ t.status }}" aria-label="{{ t.statusLabel }}" onClick="{{ stop }}" onChange="{{ t.onStatus }}" disabled="{{ t.disabled }}" style="border:0;border-radius:4px;padding:4px 6px;font-size:13px;background:{{ t.statusBg }};color:{{ t.statusFg }};cursor:pointer"><option>Not started</option><option>In progress</option><option>Blocked</option><option>Done</option></select>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </sc-if>
+      </div>
     </sc-if>
 
     <!-- CHANGE HISTORY -->
@@ -546,6 +722,12 @@
           </div>
         </div>
 
+        <sc-if value="{{ ad.hasMissingCats }}">
+          <div style="display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:14px 16px;border:1px solid #E3B77A;background:#FFF6E8;border-radius:10px;margin-top:24px">
+            <div style="display:flex;gap:10px;align-items:flex-start;max-width:760px"><i aria-hidden="true" class="ph ph-tag" style="font-size:20px;color:#7A3E00;margin-top:2px"></i><div><div style="font-weight:700">Activity types not saved yet</div><div style="font-size:13.5px;color:#46526F">{{ ad.missingLabel }}</div></div></div>
+            <button onClick="{{ ad.fillCats }}" disabled="{{ ad.backfilling }}" style="background:#2340A8;border:1px solid #2340A8;color:#FFFFFF;border-radius:8px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;white-space:nowrap;flex:none" style-hover="background:#142B7A">{{ ad.fillLabel }}</button>
+          </div>
+        </sc-if>
         <div style="display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;margin-top:28px">
           <div style="padding:16px;border:1px solid #E7ECF4;border-radius:8px;background:#FFFFFF;display:flex;flex-direction:column;gap:10px">
             <div style="display:flex;justify-content:space-between;align-items:center"><div style="font-weight:500;font-size:15px">Airtable connection</div><span style="display:inline-flex;gap:6px;align-items:center;font-size:13px;color:#2E3A59"><span style="width:7px;height:7px;border-radius:50%;background:{{ modeDot }}"></span>{{ modeLabel }}</span></div>
@@ -571,7 +753,15 @@
       <div style="display:flex;justify-content:space-between;gap:10px;align-items:flex-start">
         <div style="min-width:0">
           <div style="font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#56627F">{{ dr.kicker }}</div>
-          <h2 id="drawer-title" style="font-size:19px;margin:4px 0 0;text-wrap:pretty">{{ dr.name }}</h2>
+          <sc-if value="{{ dr.notRenaming }}"><h2 id="drawer-title" style="font-size:19px;margin:4px 0 0;text-wrap:pretty">{{ dr.name }}</h2>
+            <sc-if value="{{ dr.canRename }}"><button onClick="{{ dr.startRename }}" style="background:transparent;border:0;color:#1F3A9E;font-size:13px;cursor:pointer;padding:2px 0;display:inline-flex;gap:4px;align-items:center"><i aria-hidden="true" class="ph ph-pencil-simple"></i>Rename</button></sc-if>
+          </sc-if>
+          <sc-if value="{{ dr.renaming }}">
+            <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+              <input id="drawer-title" aria-label="Task name" value="{{ dr.renameVal }}" onChange="{{ dr.onRename }}" style="background:#FFFFFF;border:1px solid #2340A8;color:#14213D;border-radius:6px;padding:7px 9px;font-size:16px;font-weight:600">
+              <div style="display:flex;gap:6px"><button onClick="{{ dr.saveRename }}" style="background:#2340A8;border:1px solid #2340A8;color:#FFFFFF;border-radius:6px;padding:4px 12px;font-size:13.5px;cursor:pointer">Save</button><button onClick="{{ dr.cancelRename }}" style="background:transparent;border:1px solid #8792AC;color:#2E3A59;border-radius:6px;padding:4px 12px;font-size:13.5px;cursor:pointer">Cancel</button></div>
+            </div>
+          </sc-if>
         </div>
         <button id="drawer-close" aria-label="Close task details" onClick="{{ closeTask }}" style="background:transparent;border:0;color:#46526F;font-size:18px;cursor:pointer;padding:6px;border-radius:6px;white-space:nowrap;flex:none"><i aria-hidden="true" class="ph ph-x"></i></button>
       </div>
@@ -588,7 +778,26 @@
         <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Due date<input type="date" value="{{ dr.due }}" onChange="{{ dr.onDue }}" disabled="{{ dr.lockPlan }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"></label>
         <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Owner · {{ dr.role }}<select key="{{ dr.ownerKey }}" value="{{ dr.ownerId }}" onChange="{{ dr.onOwner }}" disabled="{{ dr.lockPlan }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"><option value="">Unassigned</option><sc-for list="{{ dr.ownerOpts }}" as="o"><option value="{{ o.id }}">{{ o.label }}</option></sc-for></select></label>
       </div>
+      <div style="display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end">
+        <label style="display:flex;flex-direction:column;gap:4px;font-size:12.5px;color:#56627F">Activity type<select key="{{ dr.catKey }}" value="{{ dr.category }}" onChange="{{ dr.onCat }}" disabled="{{ dr.lockCat }}" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:14px"><sc-for list="{{ dr.cats }}" as="c"><option>{{ c }}</option></sc-for></select></label>
+        <button onClick="{{ dr.togglePrio }}" aria-pressed="{{ dr.priority }}" disabled="{{ dr.lockStatus }}" style="border:1px solid {{ dr.prioBorder }};background:{{ dr.prioBg }};color:{{ dr.prioFg }};border-radius:6px;padding:7px 12px;font-size:13.5px;font-weight:600;cursor:pointer;display:inline-flex;gap:6px;align-items:center;white-space:nowrap"><i aria-hidden="true" class="{{ dr.prioIcon }}"></i>{{ dr.prioLabel }}</button>
+      </div>
       <div style="font-size:13px;color:#56627F;display:flex;gap:6px;align-items:flex-start"><i aria-hidden="true" class="ph ph-envelope-simple" style="margin-top:2px"></i><span>{{ dr.reminder }}</span></div>
+      <div>
+        <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Files &amp; links</div>
+        <sc-for list="{{ dr.files }}" as="f"><div style="display:flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid #D5DCE8;border-radius:6px;margin-bottom:4px;font-size:13.5px"><i aria-hidden="true" class="ph ph-paperclip" style="color:#46526F"></i><a href="{{ f.url }}" target="_blank" rel="noopener" style="flex:1;min-width:0;word-break:break-word">{{ f.name }}</a><span style="font-size:12px;color:#56627F;flex:none">{{ f.meta }}</span><sc-if value="{{ dr.canEditFiles }}"><button onClick="{{ f.remove }}" aria-label="{{ f.removeLabel }}" style="background:transparent;border:0;color:#46526F;cursor:pointer;padding:2px 4px;font-size:15px"><i aria-hidden="true" class="ph ph-x"></i></button></sc-if></div></sc-for>
+        <sc-for list="{{ dr.links }}" as="l"><div style="display:flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid #D5DCE8;border-radius:6px;margin-bottom:4px;font-size:13.5px"><i aria-hidden="true" class="ph ph-link-simple" style="color:#46526F"></i><a href="{{ l.url }}" target="_blank" rel="noopener" style="flex:1;min-width:0;word-break:break-word">{{ l.title }}</a><sc-if value="{{ dr.canEditFiles }}"><button onClick="{{ l.remove }}" aria-label="{{ l.removeLabel }}" style="background:transparent;border:0;color:#46526F;cursor:pointer;padding:2px 4px;font-size:15px"><i aria-hidden="true" class="ph ph-x"></i></button></sc-if></div></sc-for>
+        <sc-if value="{{ dr.noFiles }}"><div style="font-size:13px;color:#56627F;margin-bottom:6px">Nothing attached yet.</div></sc-if>
+        <sc-if value="{{ dr.canEditFiles }}">
+          <label style="display:inline-flex;gap:6px;align-items:center;margin-top:4px;background:#FFFFFF;border:1px solid #2340A8;color:#1F3A9E;border-radius:8px;padding:6px 12px;font-size:13.5px;font-weight:600;cursor:pointer;opacity:{{ dr.uploadOpacity }}"><i aria-hidden="true" class="ph ph-upload-simple"></i>{{ dr.uploadLabel }}<input type="file" onChange="{{ dr.onFile }}" disabled="{{ dr.uploading }}" accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt,.png,.jpg,.jpeg,.gif,.heic" style="position:absolute;width:1px;height:1px;opacity:0"></label>
+          <span style="font-size:12px;color:#56627F;margin-left:6px">PDFs, documents or images, up to 3 MB</span>
+          <div style="display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr) auto;gap:6px;margin-top:10px">
+            <input aria-label="Link title" value="{{ dr.linkTitle }}" onChange="{{ dr.onLinkTitle }}" placeholder="Title (optional)" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px">
+            <input aria-label="Link address" type="url" value="{{ dr.linkUrl }}" onChange="{{ dr.onLinkUrl }}" placeholder="https://drive.google.com/…" style="background:#FBF8F1;border:1px solid #8792AC;color:#14213D;border-radius:6px;padding:6px 8px;font-size:13.5px">
+            <button onClick="{{ dr.addLink }}" disabled="{{ dr.linkInvalid }}" style="background:transparent;border:1px solid #2340A8;color:#1F3A9E;border-radius:6px;padding:5px 10px;font-size:13.5px;font-weight:600;cursor:pointer;white-space:nowrap">Add link</button>
+          </div>
+        </sc-if>
+      </div>
       <sc-if value="{{ dr.hasDeps }}">
         <div>
           <div style="font-size:12.5px;color:#56627F;margin-bottom:6px">Depends on</div>
@@ -676,6 +885,19 @@ const ST = {
   'Done': { bg: '#DDF0E5', fg: '#1A6641' },
 };
 const WARN = '#8A4600';
+// Activity-type colors (tasks get a colored left edge and tag). Overdue stays orange text; flagged tasks get a red flag.
+const CAT = {
+  Funding: { bg: '#DDF0E5', fg: '#1A6641', bar: '#2E9E62' },
+  Admin: { bg: '#ECE6F8', fg: '#4B2E83', bar: '#7A5BC4' },
+  Outreach: { bg: '#FDEBD8', fg: '#8A3A00', bar: '#D9782B' },
+  Logistics: { bg: '#DCF1F4', fg: '#0F5A66', bar: '#2A9AAB' },
+  Instruction: { bg: '#DCE7FB', fg: '#1A3A8F', bar: '#3F67D1' },
+};
+const CAT_NONE = { bg: '#E7ECF4', fg: '#2E3A59', bar: '#A9B5CC' };
+const FLAG = '#B3261E';
+const US_STATES = ['AL','AK','AZ','AR','CA','CO','CT','DE','DC','FL','GA','HI','ID','IL','IN','IA','KS','KY','LA','ME','MD','MA','MI','MN','MS','MO','MT','NE','NV','NH','NJ','NM','NY','NC','ND','OH','OK','OR','PA','RI','SC','SD','TN','TX','UT','VT','VA','WA','WV','WI','WY'];
+const DATE_FILTERS = [['any', 'Any time'], ['week', 'This week'], ['nextweek', 'Next week'], ['month', 'This month'], ['nextmonth', 'Next month'], ['30', 'Next 30 days'], ['90', 'Next 90 days'], ['started', 'Already started'], ['custom', 'Custom range…']];
+const SORTS = [['day1', 'Day 1, soonest first'], ['overdue', 'Most overdue tasks'], ['name', 'Name A–Z'], ['state', 'State, then Day 1']];
 const HEALTH = {
   'On track': ST['Done'], 'Watch': { bg: '#FCF0D4', fg: '#734A00' },
   'At risk': { bg: '#FDE5D1', fg: '#8A3A00' }, 'Blocked': ST['Blocked'], 'Wrapping up': ST['Not started'],
@@ -683,16 +905,16 @@ const HEALTH = {
 const NAV = {
   mytasks: ['My tasks', 'ph ph-check-square'], programs: ['All programs', 'ph ph-squares-four'], new: ['New program', 'ph ph-plus-circle'],
   history: ['Change history', 'ph ph-clock-counter-clockwise'], templates: ['Program types', 'ph ph-tree-structure'],
-  admin: ['Users & data', 'ph ph-users-three'], portal: ['Partner portal', 'ph ph-handshake'],
+  admin: ['Users & data', 'ph ph-users-three'], portal: ['Partner portal', 'ph ph-handshake'], calendar: ['Calendar', 'ph ph-calendar-blank'],
 };
 const ACCESS = {
-  'Program Manager': ['mytasks', 'programs', 'new', 'history', 'templates', 'admin'],
-  'Program Assistant': ['mytasks', 'programs', 'new', 'history'],
-  'Executive Director': ['programs', 'mytasks', 'history', 'templates', 'admin'],
-  'Marketing Director': ['mytasks', 'programs', 'history'],
-  'Operations Director': ['mytasks', 'programs', 'history'],
-  'Grant Writer': ['mytasks', 'programs', 'history'],
-  'Board Member': ['programs', 'history'],
+  'Program Manager': ['mytasks', 'programs', 'calendar', 'new', 'history', 'templates', 'admin'],
+  'Program Assistant': ['mytasks', 'programs', 'calendar', 'new', 'history'],
+  'Executive Director': ['programs', 'mytasks', 'calendar', 'history', 'templates', 'admin'],
+  'Marketing Director': ['mytasks', 'programs', 'calendar', 'history'],
+  'Operations Director': ['mytasks', 'programs', 'calendar', 'history'],
+  'Grant Writer': ['mytasks', 'programs', 'calendar', 'history'],
+  'Board Member': ['programs', 'calendar', 'history'],
   'Partner': ['portal'],
 };
 const ACCESS_NOTE = {
@@ -701,12 +923,39 @@ const ACCESS_NOTE = {
   'Program Manager': 'Full access incl. templates & users.',
   'Executive Director': 'Full access incl. templates & users.',
 };
-const FIELD_LABEL = { status: 'Status', due: 'Due date', ownerId: 'Owner' };
+const FIELD_LABEL = { status: 'Status', due: 'Due date', ownerId: 'Owner', category: 'Activity type', priority: 'Priority', name: 'Task name' };
 const SITE_FIELDS = [
   ['partnerOrg', 'Partner organization', 'e.g. UW Recreation'], ['pocName', 'Point of contact', 'Head coach / aquatics director'],
   ['pocEmail', 'Contact email', ''], ['pocPhone', 'Contact phone', ''], ['shipping', 'Shipping address', 'Where equipment ships'],
   ['hours', 'Pool hours', 'e.g. Tue/Thu 6–8 PM'], ['instructors', 'Lead instructor(s)', ''], ['driveUrl', 'Shared Drive folder', 'https://drive.google.com/…'],
 ];
+
+const SITE_TAB_FIELDS = [['city', 'City', 'e.g. Seattle'], ['state', 'State', 'Two letters, e.g. WA'], ...SITE_FIELDS];
+
+// Does a Day 1 date fall inside the chosen period? (All Programs date filter)
+const dayMatch = (m, day1, mode, from, to) => {
+  if (!mode || mode === 'any') return true;
+  if (!day1) return false;
+  const t0 = m.today(), wk = m.addDays(t0, -m.parse(t0).getDay()), mo = t0.slice(0, 7);
+  const nm = (() => { const d = m.parse(t0); d.setDate(1); d.setMonth(d.getMonth() + 1); return m.iso(d).slice(0, 7); })();
+  switch (mode) {
+    case 'week': return day1 >= wk && day1 <= m.addDays(wk, 6);
+    case 'nextweek': return day1 >= m.addDays(wk, 7) && day1 <= m.addDays(wk, 13);
+    case 'month': return day1.slice(0, 7) === mo;
+    case 'nextmonth': return day1.slice(0, 7) === nm;
+    case '30': return day1 >= t0 && day1 <= m.addDays(t0, 30);
+    case '90': return day1 >= t0 && day1 <= m.addDays(t0, 90);
+    case 'started': return day1 <= t0;
+    case 'custom': return (!from || day1 >= from) && (!to || day1 <= to);
+    default: return true;
+  }
+};
+const csvCell = v => { const x = String(v ?? ''); return /[",\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+const download = (name, text, type) => {
+  const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([text], { type })); a.download = name;
+  document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+};
+const fmtSize = n => n >= 1048576 ? `${(n / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round((n || 0) / 1024))} KB`;
 
 const UNIT = { days: 1, weeks: 7, months: 30 };
 const splitOff = o => {
@@ -724,7 +973,10 @@ const whenText = o => {
 };
 
 class Component extends DCLogic {
-  state = { ready: false, db: null, myProgram: 'all', tplOpen: {}, tplQuery: '', tplDay1: null, tplEdit: null, tplShowOther: false, expanded: {}, phaseOpen: {}, timelineAll: {}, view: 'mytasks', userId: 'usr_jordan', programId: null, tab: 'timeline', taskId: null, myScope: 'open', histProgram: 'all', tplType: 'typ_SSS', wiz: null, resched: null, siteDraft: null, addTask: null, newUser: { name: '', email: '', role: 'Program Assistant' }, note: '', toast: '' };
+  state = { ready: false, db: null, myProgram: 'all', tplOpen: {}, tplQuery: '', tplDay1: null, tplEdit: null, tplShowOther: false, expanded: {}, phaseOpen: {}, timelineAll: {}, view: 'mytasks', userId: 'usr_jordan', programId: null, tab: 'timeline', taskId: null, myScope: 'open', histProgram: 'all', tplType: 'typ_SSS', wiz: null, resched: null, siteDraft: null, addTask: null, newUser: { name: '', email: '', role: 'Program Assistant' }, note: '', toast: '',
+    myCat: 'all', myFocus: null, progTab: 'active', progState: 'all', progType: 'all', progCity: 'all', progDate: 'any', progFrom: '', progTo: '', progSort: 'day1', progQuery: '',
+    tlCat: 'all', sel: {}, bulkShift: 7, calMonth: null, calMine: null, calProgram: 'all', calCat: 'all', calDone: false, calDay: null, calSub: false,
+    rename: null, linkDraft: { title: '', url: '' }, uploading: false, backfilling: false };
 
   async componentDidMount() {
     while (!window.NMUData) await new Promise(r => setTimeout(r, 30));
@@ -733,7 +985,7 @@ class Component extends DCLogic {
     const db = await this.api.listAll();
     let ui = {}; try { ui = JSON.parse(localStorage.getItem('nmu-launch-ui-v2') || '{}'); } catch (e) { }
     this.setState({ ready: true, db, ...ui });
-    this._onKey = e => { if (e.key !== 'Escape') return; if (this.state.tplEdit) this.setState({ tplEdit: null }); else if (this.state.resched) this.setState({ resched: null }); else if (this.state.taskId) this.setState({ taskId: null }); };
+    this._onKey = e => { if (e.key !== 'Escape') return; if (this.state.tplEdit) this.setState({ tplEdit: null }); else if (this.state.resched) this.setState({ resched: null }); else if (this.state.calSub) this.setState({ calSub: false }); else if (this.state.taskId) this.setState({ taskId: null }); };
     window.addEventListener('keydown', this._onKey);
   }
   componentWillUnmount() { window.removeEventListener('keydown', this._onKey); }
@@ -757,10 +1009,10 @@ class Component extends DCLogic {
   }
   componentDidUpdate(pp, ps) {
     if (!this.state.ready) return;
-    const { view, userId, programId, tab, myProgram } = this.state;
-    localStorage.setItem('nmu-launch-ui-v2', JSON.stringify({ view, userId, programId, tab, myProgram }));
+    const { view, userId, programId, tab, myProgram, progTab, progState, progSort } = this.state;
+    try { localStorage.setItem('nmu-launch-ui-v2', JSON.stringify({ view, userId, programId, tab, myProgram, progTab, progState, progSort })); } catch (e) { }
   }
-  go(view, extra = {}) { this.setState({ view, taskId: null, tplEdit: null, siteDraft: null, addTask: null, ...extra }); window.scrollTo(0, 0); setTimeout(() => document.getElementById('main')?.focus({ preventScroll: true }), 0); }
+  go(view, extra = {}) { this.setState({ view, taskId: null, tplEdit: null, siteDraft: null, addTask: null, sel: {}, calSub: false, rename: null, ...extra }); window.scrollTo(0, 0); setTimeout(() => document.getElementById('main')?.focus({ preventScroll: true }), 0); }
   flash(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 2600); }
   fail(e) { this.flash('Save failed — ' + e.message); }
   local(table, id, p) { this.setState(s => ({ db: { ...s.db, [table]: s.db[table].map(r => r.id === id ? { ...r, ...p } : r) } })); }
@@ -781,16 +1033,63 @@ class Component extends DCLogic {
     if (t[field] === val) return;
     const p = { [field]: val }; if (field === 'due') p.manualDate = true;
     this.patch('Tasks', t.id, p);
-    const f = field === 'ownerId' ? (x => this.uname(x)) : field === 'due' ? this.m.fmt : (x => x);
+    const f = field === 'ownerId' ? (x => this.uname(x)) : field === 'due' ? this.m.fmt : field === 'priority' ? (x => x ? 'Flagged' : 'Not flagged') : (x => x || '—');
     this.log({ programId: t.programId, taskId: t.id, field: FIELD_LABEL[field], from: f(t[field]), to: f(val) });
   }
-  freshWiz() { return { step: 1, name: '', location: '', typeId: 'typ_LTS', day1: this.m.addDays(this.m.today(), 120), partnerOrg: '', pocName: '', pocEmail: '', pocPhone: '', shipping: '', hours: '', instructors: '', driveUrl: '', draft: null, pid: this.m.rid('prg') }; }
+  freshWiz() { return { step: 1, name: '', location: '', city: '', state: '', markPastDone: true, typeId: (this.state.db && this.state.db.ProgramTypes[0] || {}).id || 'typ_LTS', day1: this.m.addDays(this.m.today(), 120), partnerOrg: '', pocName: '', pocEmail: '', pocPhone: '', shipping: '', hours: '', instructors: '', driveUrl: '', draft: null, pid: this.m.rid('prg') }; }
   getWiz() { return this.state.wiz || this._fw || (this._fw = this.freshWiz()); }
   setWiz(p) { this.setState({ wiz: { ...this.getWiz(), ...p } }); }
+  toggleSel(id) { this.setState(s => ({ sel: { ...s.sel, [id]: !s.sel[id] } })); }
+  // One change to many tasks: saved together, logged as a single entry.
+  bulk(programId, list, patchFn, desc) {
+    if (!list.length) return;
+    this.patchMany('Tasks', list.map(t => ({ id: t.id, patch: patchFn(t) })));
+    const names = list.map(t => t.name);
+    this.log({ programId, field: 'Bulk edit', from: '', to: `${desc} (${list.length} task${list.length > 1 ? 's' : ''})`, note: names.slice(0, 8).join('; ') + (names.length > 8 ? ` and ${names.length - 8} more` : '') });
+    this.flash(`${desc} · ${list.length} task${list.length > 1 ? 's' : ''}`);
+  }
+  // Spreadsheet export: one row per task. Opens in Google Sheets via File → Import, or in Excel.
+  exportCSV(programs, label) {
+    const m = this.m, db = this.state.db, ids = new Set(programs.map(p => p.id));
+    const pById = Object.fromEntries(db.Programs.map(p => [p.id, p])), tyById = Object.fromEntries(db.ProgramTypes.map(t => [t.id, t])), uById = Object.fromEntries(db.Users.map(u => [u.id, u]));
+    const head = ['Program', 'State', 'City', 'Program type', 'Day 1', 'Archived', 'Task', 'Activity type', 'Status', 'Priority', 'Due date', 'Owner', 'Role', 'Partner task', 'Links', 'Files', 'Notes'];
+    const rows = db.Tasks.filter(t => ids.has(t.programId)).sort((a, b) => (pById[a.programId].name + a.due < pById[b.programId].name + b.due ? -1 : 1)).map(t => {
+      const p = pById[t.programId];
+      return [p.name, m.stateOf(p), m.cityOf(p), (tyById[p.typeId] || {}).name || '', p.day1, p.archived ? 'Yes' : '', t.name, t.category || '', t.status, t.priority ? 'Yes' : '', t.due, (uById[t.ownerId] || {}).name || 'Unassigned', t.role,
+        t.partnerOwned ? 'Yes' : '', (t.links || []).map(l => l.url).join(' '), (t.attachments || []).map(a => a.filename).join(', '), (t.notes || '').replace(/\n/g, ' / ')];
+    });
+    const csv = [head, ...rows].map(r => r.map(csvCell).join(',')).join('\r\n');
+    download(`nmu-${label || 'tasks'}-${m.today()}.csv`, '\ufeff' + csv, 'text/csv;charset=utf-8');
+    this.flash(`Exported ${rows.length} tasks · in Google Sheets use File → Import → Upload`);
+  }
+  // .ics file of tasks (and Day 1 dates) for importing into Google Calendar or Outlook.
+  exportICS(taskList, programs) {
+    const m = this.m, db = this.state.db, pById = Object.fromEntries(db.Programs.map(p => [p.id, p]));
+    const esc = x => String(x || '').replace(/\\/g, '\\\\').replace(/\n/g, '\\n').replace(/,/g, '\\,').replace(/;/g, '\\;');
+    const d = x => x.replace(/-/g, ''), stamp = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+Z$/, 'Z');
+    const ev = (uid, date, summary, desc) => ['BEGIN:VEVENT', `UID:${uid}@nmu-launch`, `DTSTAMP:${stamp}`, `DTSTART;VALUE=DATE:${d(date)}`, `DTEND;VALUE=DATE:${d(m.addDays(date, 1))}`, `SUMMARY:${esc(summary)}`, `DESCRIPTION:${esc(desc)}`, 'TRANSP:TRANSPARENT', 'END:VEVENT'];
+    const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//No More Under//Launch planner//EN', 'CALSCALE:GREGORIAN', 'X-WR-CALNAME:NMU launch tasks'];
+    programs.filter(p => p.day1).forEach(p => lines.push(...ev(`day1-${p.id}`, p.day1, `Day 1: ${p.name}`, p.location)));
+    taskList.filter(t => t.due).forEach(t => lines.push(...ev(t.id, t.due, `${t.priority ? '⚑ ' : ''}${t.name} · ${(pById[t.programId] || {}).name || ''}`, `Status: ${t.status}${t.category ? `\nType: ${t.category}` : ''}`)));
+    lines.push('END:VCALENDAR');
+    download(`nmu-calendar-${m.today()}.ics`, lines.join('\r\n') + '\r\n', 'text/calendar;charset=utf-8');
+    this.flash(`Saved ${taskList.length} tasks · in Google Calendar use Settings → Import`);
+  }
+  async upload(t, file) {
+    if (!file) return;
+    this.setState({ uploading: true });
+    try {
+      const list = await this.api.uploadAttachment(t.id, file);
+      this.local('Tasks', t.id, { attachments: list });
+      this.log({ programId: t.programId, taskId: t.id, field: 'File attached', from: '', to: file.name });
+      this.flash(`Attached ${file.name}`);
+    } catch (e) { this.flash('Upload failed — ' + e.message); }
+    this.setState({ uploading: false });
+  }
 
   renderVals() {
     const s = this.state;
-    const base = { loading: true, stop: e => e.stopPropagation() };
+    const base = { loading: true, stop: e => e.stopPropagation(), selectAll: e => e.target.select() };
     if (!s.ready) return base;
     setTimeout(() => this.syncFocus(), 0);
     const m = this.m, db = s.db, t0 = m.today();
@@ -805,6 +1104,15 @@ class Component extends DCLogic {
     const pById = Object.fromEntries(db.Programs.map(p => [p.id, p]));
     const tasks = db.Tasks, tById = Object.fromEntries(tasks.map(t => [t.id, t]));
     const roles = m.ROLES;
+    const liveP = id => !!pById[id] && !pById[id].archived;
+    // Activity-type chips: filter and color legend in one.
+    const catChips = (list, cur, set) => [['all', 'All types'], ...m.CATEGORIES.map(c => [c, c])].map(([k, l]) => {
+      const on = cur === k, c = CAT[k];
+      return {
+        label: l, count: k === 'all' ? list.length : list.filter(t => t.category === k).length, selected: on, ariaLabel: `Show ${k === 'all' ? 'all activity types' : l}`,
+        dot: c ? c.bar : '#8792AC', bg: on ? (c ? c.bg : '#E7ECF4') : '#FFFFFF', border: on ? (c ? c.bar : '#2340A8') : '#C5CEDD', weight: on ? 700 : 500, go: () => set(k),
+      };
+    });
 
     const ck = [db.Tasks, db.Programs, db.Users, readOnly, t0];
     if (!this._vc || this._vc.key.some((k, i) => k !== ck[i])) this._vc = { key: ck, vm: new Map(), ps: new Map() };
@@ -820,7 +1128,11 @@ class Component extends DCLogic {
       const off = m.diffDays(t.due, p.day1);
       const waiting = (t.dependsOn || []).map(id => tById[id]).filter(x => x && x.status !== 'Done');
       const st = ST[t.status] || ST['Not started'];
+      const cc = CAT[t.category] || CAT_NONE, files = (t.attachments || []).length + (t.links || []).length;
       return {
+        category: t.category || 'No type', catBg: cc.bg, catFg: cc.fg, catBar: cc.bar, priority: !!t.priority, status_: t.status,
+        rowBg: !done && d < 0 ? '#FFFAF3' : '#FFFFFF', hasFiles: files > 0, fileCount: files,
+        filesTitle: [...(t.attachments || []).map(a => a.filename), ...(t.links || []).map(l => l.title)].join(', '),
         id: t.id, name: t.name, statusLabel: `Status for ${t.name}`, status: t.status, statusBg: st.bg, statusFg: st.fg, d, done, due: t.due,
         sub: `${p.name} · ${m.phaseOf(off)}`, timing: m.timingLabel(off) + (t.templateId ? '' : ' · added task'),
         dueLabel: m.fmt(t.due), relLabel: done ? 'Completed' : d < 0 ? `${-d}d overdue` : d === 0 ? 'Due today' : `in ${d}d`,
@@ -847,10 +1159,10 @@ class Component extends DCLogic {
     const nav = access.map(k => {
       const active = view === k || (k === 'programs' && view === 'program');
       let badge = '';
-      if (k === 'mytasks') { const n = tasks.filter(t => t.ownerId === me.id && t.status !== 'Done' && t.due < t0).length; badge = n ? `${n} late` : ''; }
+      if (k === 'mytasks') { const n = tasks.filter(t => t.ownerId === me.id && t.status !== 'Done' && t.due < t0 && liveP(t.programId)).length; badge = n ? `${n} late` : ''; }
       return { label: NAV[k][0], icon: NAV[k][1], badge, current: active ? 'page' : undefined, bg: active ? '#E4ECFC' : 'transparent', fg: active ? '#142B7A' : '#2E3A59', go: () => this.go(k, k === 'new' ? { wiz: this.freshWiz() } : {}) };
     });
-    const progOpts = db.Programs.map(p => ({ id: p.id, name: p.name }));
+    const progOpts = db.Programs.slice().sort((a, b) => (!!a.archived - !!b.archived) || (a.name < b.name ? -1 : 1)).map(p => ({ id: p.id, name: p.archived ? `${p.name} (archived)` : p.name }));
 
     const out = {
       ...base, loading: false, roles, progOpts, nav, userId: me.id,
@@ -862,84 +1174,145 @@ class Component extends DCLogic {
       meRole: me.role, canEdit: !readOnly, canCreate: access.includes('new'),
       goNew: () => this.go('new', { wiz: this.freshWiz() }), goPrograms: () => this.go('programs'),
       isMy: view === 'mytasks', isPrograms: view === 'programs', isProgram: view === 'program', isNew: view === 'new',
-      isTemplates: view === 'templates', isHistory: view === 'history', isPortal: view === 'portal', isAdmin: view === 'admin',
+      isTemplates: view === 'templates', isHistory: view === 'history', isPortal: view === 'portal', isAdmin: view === 'admin', isCalendar: view === 'calendar',
       toast: s.toast, hasToast: !!s.toast,
     };
 
     if (view === 'mytasks') {
-      const mineAll = tasks.filter(t => t.ownerId === me.id);
-      const myProgIds = [...new Set(mineAll.map(t => t.programId))].filter(id => pById[id]).sort((a, b) => pById[a].day1 < pById[b].day1 ? -1 : 1);
+      const mineAll = tasks.filter(t => t.ownerId === me.id && liveP(t.programId));
+      const myProgIds = [...new Set(mineAll.map(t => t.programId))].sort((a, b) => (!!pById[b].pinned - !!pById[a].pinned) || (pById[a].day1 < pById[b].day1 ? -1 : 1));
       const pf = myProgIds.includes(s.myProgram) ? s.myProgram : 'all';
-      const mine = mineAll.filter(t => pf === 'all' || t.programId === pf).map(vm).sort((a, b) => a.d - b.d);
+      const byProg = mineAll.filter(t => pf === 'all' || t.programId === pf);
+      const cf = s.myCat || 'all';
+      const mine = byProg.filter(t => cf === 'all' || t.category === cf).map(vm).sort((a, b) => (b.priority - a.priority) || (a.d - b.d));
       const open = mine.filter(x => !x.done);
+      const focus = s.myFocus;
+      const FX = { overdue: x => x.d < 0, week: x => x.d >= 0 && x.d <= 7, flagged: x => x.priority, blocked: x => x.status === 'Blocked' };
+      const stats = [['overdue', 'Overdue', WARN], ['week', 'Due in the next 7 days', '#1F3A9E'], ['flagged', 'Flagged as priority', FLAG], ['blocked', 'Blocked', ST.Blocked.fg]].map(([k, l, c]) => {
+        const n = open.filter(FX[k]).length, on = focus === k;
+        return { n, label: l, fg: n ? c : '#56627F', selected: on, ariaLabel: `${n} ${l}${on ? ', showing only these' : ''}`, bg: on ? '#F2F6FD' : '#FFFFFF', border: on ? '#2340A8' : '#D5DCE8', go: () => this.setState({ myFocus: on ? null : k, expanded: {} }) };
+      });
+      const openF = focus ? open.filter(FX[focus]) : open;
+      const flagged = openF.filter(x => x.priority), rest = openF.filter(x => !x.priority);
       const openCount = id => mineAll.filter(t => t.status !== 'Done' && (id === 'all' || t.programId === id)).length;
       const odCount = id => mineAll.filter(t => t.status !== 'Done' && t.due < t0 && (id === 'all' || t.programId === id)).length;
       const progFilters = [['all', 'All programs'], ...myProgIds.map(id => [id, pById[id].name])].map(([id, label]) => {
         const on = pf === id, od = odCount(id);
         return {
-          label, count: openCount(id), selected: on, hasOverdue: od > 0 && !on, odLabel: `${od} overdue`,
+          label: (id !== 'all' && pById[id].pinned ? '★ ' : '') + label, count: openCount(id), selected: on, hasOverdue: od > 0 && !on, odLabel: `${od} overdue`,
           ariaLabel: `${label}: ${openCount(id)} open${od ? `, ${od} overdue` : ''}`,
           bg: on ? '#2340A8' : '#FFFFFF', fg: on ? '#FFFFFF' : '#14213D', border: on ? '#2340A8' : '#8792AC', countFg: on ? '#DCE7FB' : '#56627F',
           go: () => this.setState({ myProgram: id, expanded: {} }),
         };
       });
-      const laterT = open.filter(x => x.d > 30), showLater = !!s.expanded.__later, cutoff = m.fmt(m.addDays(t0, 30));
+      const laterT = rest.filter(x => x.d > 30), showLater = !!s.expanded.__later, cutoff = m.fmt(m.addDays(t0, 30));
       const groups = [
-        { label: 'Overdue', color: WARN, tasks: open.filter(x => x.d < 0), capped: true },
-        { label: 'Due in the next 7 days', tasks: open.filter(x => x.d >= 0 && x.d <= 7) },
-        { label: 'Later this month', tasks: open.filter(x => x.d > 7 && x.d <= 30) },
-        ...(showLater ? [{ label: `Due after ${cutoff}`, tasks: laterT }] : []),
-        ...(s.myScope === 'all' ? [{ label: 'Completed', tasks: mine.filter(x => x.done).reverse() }] : []),
+        { label: 'Flagged priority', color: FLAG, tasks: flagged, icon: true },
+        { label: 'Overdue', color: WARN, tasks: rest.filter(x => x.d < 0), capped: true },
+        { label: 'Due in the next 7 days', tasks: rest.filter(x => x.d >= 0 && x.d <= 7) },
+        { label: 'Later this month', tasks: rest.filter(x => x.d > 7 && x.d <= 30) },
+        ...(showLater || focus ? [{ label: `Due after ${cutoff}`, tasks: laterT }] : []),
+        ...(s.myScope === 'all' && !focus ? [{ label: 'Completed', tasks: mine.filter(x => x.done).reverse() }] : []),
       ].filter(g => g.tasks.length).map(g => {
         const cap = g.capped && !s.expanded[g.label] && g.tasks.length > 12;
-        return { ...g, color: g.color || '#2E3A59', count: g.tasks.length, tasks: cap ? g.tasks.slice(0, 12) : g.tasks, hasMore: cap, moreLabel: `Show ${g.tasks.length - 12} more`, showMore: () => this.setState({ expanded: { ...this.state.expanded, [g.label]: true } }) };
+        return { ...g, flagIcon: !!g.icon, color: g.color || '#2E3A59', count: g.tasks.length, tasks: cap ? g.tasks.slice(0, 12) : g.tasks, hasMore: cap, moreLabel: `Show ${g.tasks.length - 12} more`, showMore: () => this.setState({ expanded: { ...this.state.expanded, [g.label]: true } }) };
       });
       const nProg = new Set(open.map(x => x.sub.split(' · ')[0])).size;
+      const fLabel = { overdue: 'overdue tasks', week: 'tasks due in the next 7 days', flagged: 'flagged tasks', blocked: 'blocked tasks' }[focus];
       out.my = {
-        groups, empty: !groups.length, emptyText: laterT.length ? 'Nothing overdue or due in the next 30 days.' : 'Nothing assigned to you right now.',
-        hasLater: laterT.length > 0, showLater, laterIcon: showLater ? 'ph ph-caret-up' : 'ph ph-caret-down',
+        groups, empty: !groups.length, stats,
+        emptyText: focus ? `No ${fLabel} right now.` : laterT.length ? 'Nothing overdue or due in the next 30 days.' : cf !== 'all' ? `No open ${cf} tasks assigned to you.` : 'Nothing assigned to you right now.',
+        hasFocus: !!focus, focusLabel: focus ? `Showing only ${fLabel}` : '', clearFocus: () => this.setState({ myFocus: null }),
+        hasLater: laterT.length > 0 && !focus, showLater, laterIcon: showLater ? 'ph ph-caret-up' : 'ph ph-caret-down',
         laterLabel: showLater ? `Hide tasks due after ${cutoff}` : `Show ${laterT.length} more task${laterT.length === 1 ? '' : 's'} due after ${cutoff}`,
         toggleLater: () => this.setState({ expanded: { ...this.state.expanded, __later: !showLater } }),
         progFilters, hasProgFilters: myProgIds.length > 1, filtered: pf !== 'all',
+        cats: catChips(byProg.filter(t => t.status !== 'Done'), cf, k => this.setState({ myCat: k, expanded: {} })),
         filterName: pf !== 'all' ? pById[pf].name : '', filterDay1: pf !== 'all' ? `Day 1 ${m.fmtLong(pById[pf].day1)}` : '',
         openProgram: () => this.go('program', { programId: pf, tab: 'timeline' }), canOpenProgram: access.includes('programs'),
-        summary: pf !== 'all'
-          ? `${open.filter(x => x.d < 0).length} overdue · ${open.filter(x => x.d >= 0 && x.d <= 30).length} due in the next 30 days · ${open.length} open for this program`
-          : `${open.filter(x => x.d < 0).length} overdue · ${open.filter(x => x.d >= 0 && x.d <= 30).length} due in the next 30 days · ${open.length} open across ${nProg} program${nProg === 1 ? '' : 's'}`,
+        summary: `${open.filter(x => x.d < 0).length} overdue · ${open.filter(x => x.d >= 0 && x.d <= 30).length} due in the next 30 days · ${open.length} open ${pf !== 'all' ? 'for this program' : `across ${nProg} program${nProg === 1 ? '' : 's'}`}`,
         scopes: [['open', 'Open'], ['all', 'Include completed']].map(([k, l]) => ({ label: l, selected: s.myScope === k, bg: s.myScope === k ? '#E7ECF4' : 'transparent', fg: s.myScope === k ? '#14213D' : '#46526F', go: () => this.setState({ myScope: k }) })),
       };
     }
 
     if (view === 'programs') {
-      const rows = db.Programs.slice().sort((a, b) => a.day1 < b.day1 ? -1 : 1).map(p => {
+      const tab = s.progTab === 'archived' ? 'archived' : 'active';
+      const nArch = db.Programs.filter(p => p.archived).length, nAct = db.Programs.length - nArch;
+      const inTab = db.Programs.filter(p => (tab === 'archived') === !!p.archived);
+      const states = [...new Set(inTab.map(m.stateOf).filter(Boolean))].sort();
+      const stF = states.includes(s.progState) ? s.progState : 'all';
+      const inState = inTab.filter(p => stF === 'all' || m.stateOf(p) === stF);
+      const cities = [...new Set(inState.map(m.cityOf).filter(Boolean))].sort();
+      const cityF = cities.includes(s.progCity) ? s.progCity : 'all';
+      const typeF = tyById[s.progType] ? s.progType : 'all';
+      const q = (s.progQuery || '').trim().toLowerCase();
+      const shown = inState.filter(p => (cityF === 'all' || m.cityOf(p) === cityF) && (typeF === 'all' || p.typeId === typeF)
+        && dayMatch(m, p.day1, s.progDate, s.progFrom, s.progTo) && (!q || `${p.name} ${p.location} ${p.partnerOrg}`.toLowerCase().includes(q)));
+      const sortKey = s.progSort || 'day1';
+      const cmp = {
+        day1: (a, b) => (a.day1 < b.day1 ? -1 : 1),
+        overdue: (a, b) => progStats(b).overdue - progStats(a).overdue || (a.day1 < b.day1 ? -1 : 1),
+        name: (a, b) => (a.name.toLowerCase() < b.name.toLowerCase() ? -1 : 1),
+        state: (a, b) => (m.stateOf(a) || 'ZZ').localeCompare(m.stateOf(b) || 'ZZ') || (a.day1 < b.day1 ? -1 : 1),
+      }[sortKey] || ((a, b) => (a.day1 < b.day1 ? -1 : 1));
+      const sorted = shown.slice().sort((a, b) => (!!b.pinned - !!a.pinned) || cmp(a, b));
+      const rows = sorted.map(p => {
         const st = progStats(p), ty = tyById[p.typeId] || {};
         const next = st.pt.filter(t => t.status !== 'Done').sort((a, b) => a.due < b.due ? -1 : 1)[0];
-        const h = HEALTH[st.health];
+        const h = p.archived ? ST['Not started'] : HEALTH[st.health];
+        const stc = m.stateOf(p);
         return {
-          name: p.name, location: p.location, typeCode: ty.code, day1Label: m.fmt(p.day1), countdown: st.countdown,
+          name: p.name, location: [p.location, stc && !(p.location || '').endsWith(stc) ? stc : ''].filter(Boolean).join(' · '), typeCode: ty.code, day1Label: m.fmt(p.day1), countdown: p.archived ? m.parse(p.day1).getFullYear() : st.countdown,
           pct: st.total ? Math.round(st.done / st.total * 100) : 0, pctLabel: `${p.name} progress`, pctW: `${st.total ? Math.round(st.done / st.total * 100) : 0}%`, doneLabel: `${st.done} of ${st.total} done`,
           overdue: st.overdue, blocked: st.blocked, overdueColor: st.overdue ? WARN : '#5E6987', blockedColor: st.blocked ? ST.Blocked.fg : '#5E6987',
           nextName: next ? next.name : 'All tasks complete', nextMeta: next ? `${m.fmt(next.due)} · ${next.ownerId ? uById[next.ownerId]?.name : 'Unassigned'}` : '',
-          health: st.health, healthBg: h.bg, healthFg: h.fg,
+          health: p.archived ? 'Archived' : st.health, healthBg: h.bg, healthFg: h.fg,
+          pinned: !!p.pinned, pinIcon: p.pinned ? 'ph-fill ph-star' : 'ph ph-star', pinColor: p.pinned ? '#B07A00' : '#8792AC',
+          pinLabel: p.pinned ? `Unpin ${p.name}` : `Pin ${p.name} to the top`, canPin: !readOnly && !p.archived,
+          pin: e => { e.stopPropagation(); this.patch('Programs', p.id, { pinned: !p.pinned }); this.log({ programId: p.id, field: 'Pinned', from: p.pinned ? 'Yes' : 'No', to: p.pinned ? 'No' : 'Yes' }); this.flash(p.pinned ? `${p.name} unpinned` : `${p.name} pinned to the top`); },
           open: () => this.go('program', { programId: p.id, tab: 'timeline' }),
         };
       });
-      const od = tasks.filter(t => t.status !== 'Done' && t.due < t0).length, bl = tasks.filter(t => t.status === 'Blocked').length;
-      out.all = { rows, summary: `${rows.length} launches · ${od} overdue tasks · ${bl} blocked` };
+      const filtersOn = stF !== 'all' || cityF !== 'all' || typeF !== 'all' || (s.progDate && s.progDate !== 'any') || !!q;
+      const od = shown.reduce((a, p) => a + progStats(p).overdue, 0), bl = shown.reduce((a, p) => a + progStats(p).blocked, 0);
+      out.all = {
+        rows, empty: !rows.length, emptyText: inTab.length ? 'No programs match these filters.' : tab === 'archived' ? 'No archived programs yet. Archive a finished program from its page.' : 'No active programs.',
+        summary: tab === 'archived' ? `${rows.length} archived program${rows.length === 1 ? '' : 's'} · tasks and history are kept` : `${rows.length} launch${rows.length === 1 ? '' : 'es'} · ${od} overdue tasks · ${bl} blocked`,
+        tabs: [['active', `Active`, nAct], ['archived', 'Archived', nArch]].map(([k, l, n]) => ({ label: l, count: n, selected: tab === k, line: tab === k ? '#2340A8' : 'transparent', fg: tab === k ? '#14213D' : '#46526F', weight: tab === k ? 700 : 500, go: () => this.setState({ progTab: k, progState: 'all', progCity: 'all' }) })),
+        states: [['all', 'All states', inTab.length], ...states.map(x => [x, x, inTab.filter(p => m.stateOf(p) === x).length])].map(([k, l, n]) => {
+          const on = stF === k;
+          return { label: l, count: n, selected: on, ariaLabel: `${k === 'all' ? 'All states' : `State ${l}`}: ${n} programs`, bg: on ? '#2340A8' : '#FFFFFF', fg: on ? '#FFFFFF' : '#14213D', border: on ? '#2340A8' : '#8792AC', countFg: on ? '#DCE7FB' : '#56627F', go: () => this.setState({ progState: k, progCity: 'all' }) };
+        }),
+        hasStates: states.length > 0,
+        query: s.progQuery, onQuery: e => this.setState({ progQuery: e.target.value }),
+        typeOpts: db.ProgramTypes.map(t => ({ id: t.id, name: t.name })), type: typeF, typeKey: 't' + typeF, onType: e => this.setState({ progType: e.target.value }),
+        cityOpts: cities, city: cityF, cityKey: 'c' + cityF + stF, onCity: e => this.setState({ progCity: e.target.value }),
+        dateOpts: DATE_FILTERS.map(([id, name]) => ({ id, name })), date: s.progDate || 'any', dateKey: 'd' + (s.progDate || 'any'), onDate: e => this.setState({ progDate: e.target.value }),
+        isCustom: s.progDate === 'custom', from: s.progFrom, to: s.progTo, onFrom: e => this.setState({ progFrom: e.target.value }), onTo: e => this.setState({ progTo: e.target.value }),
+        sortOpts: SORTS.map(([id, name]) => ({ id, name })), sort: sortKey, sortKey: 's' + sortKey, onSort: e => this.setState({ progSort: e.target.value }),
+        filtersOn, clear: () => this.setState({ progState: 'all', progCity: 'all', progType: 'all', progDate: 'any', progFrom: '', progTo: '', progQuery: '' }),
+        exportCsv: () => this.exportCSV(sorted, tab === 'archived' ? 'archived-programs' : 'programs'), canExport: rows.length > 0,
+      };
     }
 
     if (view === 'program') {
       const p = pById[s.programId] || db.Programs[0];
-      const st = progStats(p), ty = tyById[p.typeId] || {}, h = HEALTH[st.health];
-      const showAll = !!s.timelineAll[p.id];
+      const edit = !readOnly && !p.archived;
+      const st = progStats(p), ty = tyById[p.typeId] || {}, h = p.archived ? ST['Not started'] : HEALTH[st.health];
+      const showAll = !!s.timelineAll[p.id] || !!p.archived;
+      const cf = s.tlCat || 'all', sel = s.sel || {};
+      const visibleIds = [];
       const phases = m.PHASES.map(ph => {
         const full = st.pt.filter(t => ph.test(m.diffDays(t.due, p.day1))).sort((a, b) => a.due < b.due ? -1 : a.due > b.due ? 1 : 0).map(vm);
-        const list = showAll ? full : full.filter(x => !x.done && x.d <= 30);
+        const fullC = full.filter(x => cf === 'all' || x.category === cf);
+        const list = showAll ? fullC : fullC.filter(x => !x.done && x.d <= 30);
         const key = p.id + '|' + ph.label;
         const open = s.phaseOpen[key] ?? true;
         const od = full.filter(x => !x.done && x.d < 0).length;
+        if (open) list.forEach(x => visibleIds.push(x.id));
         return {
-          label: ph.label, tasks: open ? list : [], open, chevron: open ? 'ph ph-caret-down' : 'ph ph-caret-right',
+          label: ph.label, open, chevron: open ? 'ph ph-caret-down' : 'ph ph-caret-right',
+          tasks: open ? list.map(x => ({ ...x, checked: !!sel[x.id], checkLabel: `Select ${x.name}`, onCheck: () => this.toggleSel(x.id) })) : [],
           meta: `${full.filter(x => x.done).length}/${full.length} done${od ? ` · ${od} overdue` : ''}`,
           toggle: () => this.setState({ phaseOpen: { ...this.state.phaseOpen, [key]: !open } }),
           n: list.length, border: open ? '1px solid #E7ECF4' : '0',
@@ -947,45 +1320,88 @@ class Component extends DCLogic {
       }).filter(x => x.n);
       const logs = db.ChangeLog.filter(l => l.programId === p.id).sort((a, b) => a.at < b.at ? 1 : -1).map(l => this.logVM(l, uById, tById, pById));
       const tabs = [['timeline', 'Timeline'], ['site', 'Site details'], ['history', `History (${logs.length})`]];
+      const canArchive = access.includes('new');
+      const files = st.pt.flatMap(t => [...(t.attachments || []).map(a => ({ name: a.filename, url: a.url, task: t.name, meta: fmtSize(a.size), icon: 'ph ph-paperclip', open: () => this.setState({ taskId: t.id, note: '' }) })), ...(t.links || []).map(l => ({ name: l.title, url: l.url, task: t.name, meta: 'Link', icon: 'ph ph-link-simple', open: () => this.setState({ taskId: t.id, note: '' }) }))]);
       out.pg = {
-        name: p.name, location: p.location, partnerOrg: p.partnerOrg || 'No partner org yet', typeName: ty.name, health: st.health, healthBg: h.bg, healthFg: h.fg,
-        day1Long: m.fmtLong(p.day1), countdown: st.countdown, doneLabel: `${st.done} of ${st.total} tasks done · ${st.overdue} overdue`,
+        name: p.name, location: [p.location, m.stateOf(p) && !(p.location || '').endsWith(m.stateOf(p)) ? m.stateOf(p) : ''].filter(Boolean).join(' · '), partnerOrg: p.partnerOrg || 'No partner org yet', typeName: ty.name, health: p.archived ? 'Archived' : st.health, healthBg: h.bg, healthFg: h.fg,
+        day1Long: m.fmtLong(p.day1), countdown: st.countdown, doneLabel: `${st.done} of ${st.total} tasks done · ${st.overdue} overdue`, edit,
+        archived: !!p.archived, canArchive: canArchive && !p.archived, canRestore: canArchive && !!p.archived,
+        archive: () => { this.patch('Programs', p.id, { archived: true, pinned: false }); this.log({ programId: p.id, field: 'Archived', from: 'Active', to: 'Archived', note: 'Tasks and history kept' }); this.flash(`${p.name} archived · find it under All programs → Archived`); },
+        restore: () => { this.patch('Programs', p.id, { archived: false }); this.log({ programId: p.id, field: 'Archived', from: 'Archived', to: 'Active' }); this.flash(`${p.name} restored to active programs`); },
+        pinned: !!p.pinned, canPin: edit, pinIcon: p.pinned ? 'ph-fill ph-star' : 'ph ph-star', pinLabel: p.pinned ? 'Pinned' : 'Pin to top',
+        pin: () => { this.patch('Programs', p.id, { pinned: !p.pinned }); this.log({ programId: p.id, field: 'Pinned', from: p.pinned ? 'Yes' : 'No', to: p.pinned ? 'No' : 'Yes' }); },
+        exportCsv: () => this.exportCSV([p], p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')),
         tabs: tabs.map(([k, l]) => ({ label: l, selected: s.tab === k, line: s.tab === k ? '#2340A8' : 'transparent', fg: s.tab === k ? '#14213D' : '#46526F', go: () => this.setState({ tab: k, siteDraft: null }) })),
         isTimeline: s.tab === 'timeline', isSite: s.tab === 'site', isHistory: s.tab === 'history',
         phases, history: logs, noHistory: !logs.length, hasDrive: !!p.driveUrl, driveUrl: p.driveUrl,
-        site: SITE_FIELDS.map(([k, l]) => ({ label: l, value: p[k] || 'Missing', color: p[k] ? '#14213D' : WARN })),
+        files, hasFiles: files.length > 0, noFiles: !files.length, filesLabel: `Files & links (${files.length})`,
+        site: SITE_TAB_FIELDS.map(([k, l]) => ({ label: l, value: p[k] || 'Missing', color: p[k] ? '#14213D' : WARN })),
+        cats: catChips(st.pt.filter(t => showAll || t.status !== 'Done'), cf, k => this.setState({ tlCat: k })),
+        cols: edit ? '24px minmax(0,1fr) minmax(110px,150px) 104px 132px' : 'minmax(0,1fr) minmax(110px,150px) 104px 132px',
       };
       const visible = phases.reduce((a, x) => a + x.n, 0);
       Object.assign(out.pg, {
-        showAll, noVisible: !visible, hasHidden: showAll || visible < st.total, allIcon: showAll ? 'ph ph-caret-up' : 'ph ph-caret-down',
-        windowNote: showAll ? `Showing all ${st.total} tasks` : `Showing overdue and due in the next 30 days · ${visible} of ${st.total} tasks`,
+        showAll, noVisible: !visible, hasHidden: !p.archived && (showAll || visible < st.total), allIcon: showAll ? 'ph ph-caret-up' : 'ph ph-caret-down',
+        windowNote: showAll ? `Showing ${cf === 'all' ? 'all' : cf} ${visible} of ${st.total} tasks` : `Showing overdue and due in the next 30 days · ${visible} of ${st.total} tasks`,
         allLabel: showAll ? 'Show next 30 days only' : `Show all ${st.total} tasks`,
         toggleAll: () => this.setState({ timelineAll: { ...this.state.timelineAll, [p.id]: !showAll } }),
+        noVisibleText: cf !== 'all' ? `No ${cf} tasks in this view.` : 'No open tasks due in the next 30 days.',
       });
+
+      // Select tasks on the timeline, then change them together (status, owner, dates, type, priority).
+      const chosen = st.pt.filter(t => sel[t.id]);
+      const ownerOpts = users.filter(u => u.active && (u.role !== 'Partner' || u.programId === p.id)).map(u => ({ id: u.id, label: `${u.name} · ${u.role}` }));
+      out.bk = {
+        has: edit && chosen.length > 0, label: `${chosen.length} selected`, ownerOpts, cats: m.CATEGORIES, shift: s.bulkShift,
+        selectShown: () => this.setState({ sel: Object.fromEntries(visibleIds.map(id => [id, true])) }), canSelectShown: edit && visibleIds.length > 0,
+        clear: () => this.setState({ sel: {} }),
+        onStatus: e => { const v = e.target.value; if (v) this.bulk(p.id, chosen, () => ({ status: v }), `Status → ${v}`); },
+        onOwner: e => { const v = e.target.value; if (v) this.bulk(p.id, chosen, () => ({ ownerId: v === '-' ? '' : v }), `Owner → ${v === '-' ? 'Unassigned' : this.uname(v)}`); },
+        onCat: e => { const v = e.target.value; if (v) this.bulk(p.id, chosen, () => ({ category: v }), `Activity type → ${v}`); },
+        flag: () => this.bulk(p.id, chosen, () => ({ priority: true }), 'Flagged as priority'),
+        unflag: () => this.bulk(p.id, chosen, () => ({ priority: false }), 'Priority flag removed'),
+        onShift: e => this.setState({ bulkShift: parseInt(e.target.value, 10) || 0 }),
+        applyShift: () => { const n = this.state.bulkShift; if (n) this.bulk(p.id, chosen, t => ({ due: m.addDays(t.due, n), manualDate: true }), `Dates moved ${n > 0 ? '+' : ''}${n} days`); },
+        onDate: e => { const v = e.target.value; if (v) this.bulk(p.id, chosen, () => ({ due: v, manualDate: true }), `Due date → ${m.fmt(v)}`); },
+      };
+
       out.siteView = !s.siteDraft; out.siteEdit = !!s.siteDraft;
-      out.editSite = () => this.setState({ siteDraft: Object.fromEntries(SITE_FIELDS.map(([k]) => [k, p[k] || ''])) });
+      out.editSite = () => this.setState({ siteDraft: Object.fromEntries(SITE_TAB_FIELDS.map(([k]) => [k, p[k] || ''])) });
       out.cancelSite = () => this.setState({ siteDraft: null });
       out.saveSite = () => {
-        const d = this.state.siteDraft, changed = SITE_FIELDS.filter(([k]) => (p[k] || '') !== d[k]);
+        const d = { ...this.state.siteDraft, state: (this.state.siteDraft.state || '').trim().toUpperCase() };
+        const changed = SITE_TAB_FIELDS.filter(([k]) => (p[k] || '') !== d[k]);
         if (changed.length) {
           this.patch('Programs', p.id, d);
           changed.forEach(([k, l]) => this.log({ programId: p.id, field: l, from: p[k] || '—', to: d[k] || '—' }));
         }
         this.setState({ siteDraft: null }); this.flash(changed.length ? `Saved ${changed.length} site detail${changed.length > 1 ? 's' : ''}` : 'No changes');
       };
-      if (s.siteDraft) out.sd = { fields: SITE_FIELDS.map(([k, l, ph]) => ({ label: l, ph, value: s.siteDraft[k], onChange: e => this.setState({ siteDraft: { ...this.state.siteDraft, [k]: e.target.value } }) })) };
+      if (s.siteDraft) out.sd = { fields: SITE_TAB_FIELDS.map(([k, l, ph]) => ({ label: l, ph, value: s.siteDraft[k], onChange: e => this.setState({ siteDraft: { ...this.state.siteDraft, [k]: e.target.value } }) })) };
       out.openResched = () => this.setState({ resched: { programId: p.id, newDate: p.day1, moveManual: {} } });
+
+      // Add a task: pick a reusable title (from the checklists or earlier added tasks) or type a new one, then add details.
+      const tplByName = Object.fromEntries(db.TemplateTasks.map(x => [x.name.toLowerCase(), x]));
+      out.titles = [...new Set([...db.TemplateTasks.map(x => x.name), ...tasks.filter(x => !x.templateId).map(x => x.name)])].sort((a, b) => a.localeCompare(b));
       out.addNoForm = !s.addTask; out.addOpen = !!s.addTask;
-      out.openAddTask = () => this.setState({ addTask: { name: '', due: m.addDays(t0, 7), role: 'Program Assistant' } });
+      out.openAddTask = () => this.setState({ addTask: { name: '', due: m.addDays(t0, 7), role: 'Program Assistant', category: 'Admin', priority: false, details: '' } });
       out.cancelAddTask = () => this.setState({ addTask: null });
       if (s.addTask) {
         const a = s.addTask, upd = k => e => this.setState({ addTask: { ...this.state.addTask, [k]: e.target.value } });
-        out.addT = { ...a, onName: upd('name'), onDue: upd('due'), onRole: upd('role'), invalid: !a.name.trim() || !a.due };
+        const known = tplByName[a.name.trim().toLowerCase()];
+        out.addT = {
+          ...a, onDue: upd('due'), onRole: upd('role'), onCat: upd('category'), onDetails: upd('details'), roleKey: 'r' + a.role, catKey: 'c' + a.category,
+          onName: e => { const v = e.target.value, k = tplByName[v.trim().toLowerCase()]; this.setState({ addTask: { ...this.state.addTask, name: v, ...(k ? { role: k.role, category: k.category } : {}) } }); },
+          onPriority: () => this.setState({ addTask: { ...this.state.addTask, priority: !this.state.addTask.priority } }),
+          known: !!known, knownNote: known ? `From the checklist: usually ${known.role}, ${whenText(known.offset)}.` : 'Pick a common title from the list, or type a new one.',
+          invalid: !a.name.trim() || !a.due,
+        };
       }
       out.saveAddTask = () => {
         const a = this.state.addTask; if (!a.name.trim()) return;
         const holders = users.filter(u => u.active && u.role === a.role && (a.role !== 'Partner' || u.programId === p.id));
-        const t = { id: m.rid('tsk'), programId: p.id, templateId: '', name: a.name.trim(), due: a.due, status: 'Not started', role: a.role, ownerId: holders.length === 1 ? holders[0].id : '', notes: '', dependsOn: [], partnerOwned: a.role === 'Partner', manualDate: true };
+        const notes = a.details.trim() ? `[${m.fmt(t0)} · ${me.name}] ${a.details.trim()}` : '';
+        const t = { id: m.rid('tsk'), programId: p.id, templateId: '', name: a.name.trim(), due: a.due, status: 'Not started', role: a.role, ownerId: holders.length === 1 ? holders[0].id : '', notes, dependsOn: [], partnerOwned: a.role === 'Partner', manualDate: true, category: a.category, priority: !!a.priority, attachments: [], links: [] };
         this.insert('Tasks', [t]); this.log({ programId: p.id, taskId: t.id, field: 'Task', from: '', to: 'Added', note: t.name });
         this.setState({ addTask: null }); this.flash('Task added');
       };
@@ -993,19 +1409,24 @@ class Component extends DCLogic {
 
     if (view === 'new') {
       const w = this.getWiz(), on = {};
-      ['name', 'location', 'day1'].forEach(k => on[k] = e => this.setWiz({ [k]: e.target.value, draft: k === 'day1' ? null : this.getWiz().draft }));
+      ['name', 'location', 'day1', 'city', 'state'].forEach(k => on[k] = e => this.setWiz({ [k]: e.target.value, draft: k === 'day1' ? null : this.getWiz().draft }));
+      // Day 1 may be up to 6 months in the past, for programs that are already underway when they're entered.
+      const minDay1 = m.addDays(t0, -183);
       const type = tyById[w.typeId];
       const steps = ['Basics & profile', 'Site details', 'Review timeline'].map((l, i) => {
         const n = i + 1, cur = n === w.step, done = n < w.step;
         return { n, label: l, border: cur ? '#2340A8' : '#8792AC', fg: cur || done ? '#14213D' : '#56627F', dotBg: cur ? '#2340A8' : done ? '#DCE7FB' : '#E7ECF4', dotFg: cur ? '#FFFFFF' : '#14213D' };
       });
-      const valid1 = w.name.trim() && w.location.trim() && w.day1;
+      const valid1 = w.name.trim() && w.location.trim() && w.day1 && w.day1 >= minDay1;
       out.w = {
-        ...w, on, steps, is1: w.step === 1, is2: w.step === 2, is3: w.step === 3, canBack: w.step > 1,
+        ...w, on, steps, minDay1, stateOpts: US_STATES, stateKey: 's' + w.state, day1Past: !!w.day1 && w.day1 < t0,
+        day1Note: w.day1 && w.day1 < minDay1 ? `Day 1 can be at most 6 months ago (${m.fmt(minDay1)}).` : w.day1 && w.day1 < t0 ? 'This program already started. You can mark past tasks as done on the review step.' : 'Can be up to 6 months in the past for programs already underway.',
+        day1NoteColor: w.day1 && w.day1 < minDay1 ? WARN : '#56627F',
+        is1: w.step === 1, is2: w.step === 2, is3: w.step === 3, canBack: w.step > 1,
         back: () => this.setWiz({ step: w.step - 1 }),
         nextLabel: w.step === 3 ? 'Create program' : w.step === 2 ? 'Generate timeline' : 'Continue',
         nextDisabled: w.step === 1 && !valid1, nextOpacity: w.step === 1 && !valid1 ? 0.45 : 1,
-        hint: w.step === 1 && !valid1 ? 'Name, location and Day 1 are required' : '',
+        hint: w.step === 1 && !valid1 ? (w.day1 && w.day1 < minDay1 ? 'Day 1 is more than 6 months ago' : 'Name, location and Day 1 are required') : '',
         types: db.ProgramTypes.map(ty => {
           const on2 = ty.id === w.typeId;
           return { selected: on2, name: ty.name, code: ty.code, desc: ty.description, count: db.TemplateTasks.filter(x => x.types.includes(ty.id)).length, bg: on2 ? '#E4ECFC' : '#FFFFFF', border: on2 ? '#2340A8' : '#8792AC', pick: () => this.setWiz({ typeId: ty.id, draft: null }) };
@@ -1019,8 +1440,8 @@ class Component extends DCLogic {
             return this.setWiz({ step: 3, draft });
           }
           const inc = W.draft.filter(t => t.include), ids = new Set(inc.map(t => t.id));
-          const prog = { id: W.pid, name: W.name.trim(), typeId: W.typeId, location: W.location.trim(), day1: W.day1, status: 'Active', managerId: (users.find(u => u.role === 'Program Manager') || {}).id || '', ...Object.fromEntries(SITE_FIELDS.map(([k]) => [k, W[k]])) };
-          const recs = inc.map(({ include, ...t }) => ({ ...t, dependsOn: t.dependsOn.filter(d => ids.has(d)) }));
+          const prog = { id: W.pid, name: W.name.trim(), typeId: W.typeId, location: W.location.trim(), city: W.city.trim(), state: W.state, pinned: false, archived: false, day1: W.day1, status: 'Active', managerId: (users.find(u => u.role === 'Program Manager') || {}).id || '', ...Object.fromEntries(SITE_FIELDS.map(([k]) => [k, W[k]])) };
+          const recs = inc.map(({ include, ...t }) => ({ ...t, dependsOn: t.dependsOn.filter(d => ids.has(d)), status: W.markPastDone && t.due < t0 ? 'Done' : t.status }));
           this.insert('Programs', [prog]).then(() => this.insert('Tasks', recs));
           this.log({ programId: prog.id, field: 'Program', from: '', to: 'Created', note: `Created from ${tyById[W.typeId].name} profile with ${recs.length} tasks` });
           this._fw = null;
@@ -1033,7 +1454,9 @@ class Component extends DCLogic {
         const first = inc.map(t => t.due).sort()[0];
         out.w.draftTitle = `${inc.length} of ${w.draft.length} tasks · ${type.name}`;
         out.w.draftMeta = `Day 1 ${m.fmtLong(w.day1)}${first ? ` · first due ${m.fmt(first)}` : ''}`;
-        out.w.hasPast = past > 0; out.w.pastLabel = `${past} task${past > 1 ? 's are' : ' is'} already past due — Day 1 is less than 4 months away. Adjust dates or uncheck them.`;
+        out.w.hasPast = past > 0; out.w.pastLabel = `${past} task${past > 1 ? 's are' : ' is'} already past due${w.day1 < t0 ? ' because this program already started' : ' because Day 1 is less than 6 months away'}.`;
+        out.w.markPastLabel = `Mark the ${past} past-due task${past > 1 ? 's' : ''} as done (they were handled before this program was entered)`;
+        out.w.togglePast = () => this.setWiz({ markPastDone: !this.getWiz().markPastDone });
         const setD = (id, p) => this.setWiz({ draft: this.getWiz().draft.map(t => t.id === id ? { ...t, ...p } : t) });
         out.w.phases = m.PHASES.map(ph => ({
           label: ph.label,
@@ -1088,12 +1511,13 @@ class Component extends DCLogic {
                 name: x.name, when: whenText(x.offset), example: `e.g. ${m.fmtLong(m.addDays(day1, x.offset))}`,
                 role: x.role, support: (x.supportRoles || []).join(', '), hasSupport: (x.supportRoles || []).length > 0,
                 partner: !!x.partnerOwned, onlyHere: x.types.length === 1, waits: waits.join(', '), hasWaits: waits.length > 0,
-                editLabel: `Edit ${x.name}`, edit: () => this.setState({ tplEdit: { id: x.id, name: x.name, ...splitOff(x.offset), role: x.role, partnerOwned: !!x.partnerOwned, types: [...x.types], dependsOn: [...(x.dependsOn || [])], error: '' } }),
+                category: x.category || 'No type', catBg: (CAT[x.category] || CAT_NONE).bg, catFg: (CAT[x.category] || CAT_NONE).fg,
+                editLabel: `Edit ${x.name}`, edit: () => this.setState({ tplEdit: { id: x.id, name: x.name, ...splitOff(x.offset), role: x.role, category: x.category || m.categorize(x.name, x.role), partnerOwned: !!x.partnerOwned, types: [...x.types], dependsOn: [...(x.dependsOn || [])], error: '' } }),
               };
             }),
           };
         }),
-        add: () => this.setState({ tplEdit: { id: null, name: '', dir: 'before', n: 2, unit: 'weeks', role: 'Program Assistant', partnerOwned: false, types: [sel.id], dependsOn: [], error: '' } }),
+        add: () => this.setState({ tplEdit: { id: null, name: '', dir: 'before', n: 2, unit: 'weeks', role: 'Program Assistant', category: 'Admin', partnerOwned: false, types: [sel.id], dependsOn: [], error: '' } }),
         excluded: sorted.filter(x => !x.types.includes(sel.id)).map(x => ({
           name: x.name, when: whenText(x.offset), usedBy: x.types.map(typeCode).join(', ') || 'no types', addLabel: `Add ${x.name} to ${sel.name}`,
           add: () => { this.patch('TemplateTasks', x.id, { types: [...x.types, sel.id] }); logT('Added to type', '—', sel.name, x.name); this.flash(`Added to ${sel.name}`); },
@@ -1121,6 +1545,7 @@ class Component extends DCLogic {
           onUnit: ev => set({ unit: ev.target.value }),
           onDir: ev => set({ dir: ev.target.value, n: ev.target.value === 'during' ? Math.min(e.n, 5) : e.n }),
           onRole: ev => set({ role: ev.target.value }),
+          cats: m.CATEGORIES, catKey: 'c' + e.category, onCat: ev => set({ category: ev.target.value }),
           onPartner: () => set({ partnerOwned: !e.partnerOwned }),
           preview: `${whenText(off)} — for a program starting ${m.fmtLong(day1)}, this is due ${m.fmtLong(m.addDays(day1, off))}.`,
           types: db.ProgramTypes.map(ty => ({ name: ty.name, on: e.types.includes(ty.id), toggle: () => set({ types: e.types.includes(ty.id) ? e.types.filter(x => x !== ty.id) : [...e.types, ty.id] }) })),
@@ -1135,7 +1560,7 @@ class Component extends DCLogic {
             const E = this.state.tplEdit, name = E.name.trim(), o2 = joinOff(E);
             if (!name) return this.setState(st => ({ tplEdit: { ...st.tplEdit, error: 'Give the task a name.' } }));
             if (!E.types.length) return this.setState(st => ({ tplEdit: { ...st.tplEdit, error: 'Pick at least one program type.' } }));
-            const rec = { name, offset: o2, role: E.role, partnerOwned: E.partnerOwned, types: E.types, dependsOn: E.dependsOn };
+            const rec = { name, offset: o2, role: E.role, category: E.category, partnerOwned: E.partnerOwned, types: E.types, dependsOn: E.dependsOn };
             if (!E.id) {
               this.insert('TemplateTasks', [{ id: m.rid('tpl'), supportRoles: [], ...rec }]); logT('Added task', '—', name, sel.name);
               this.setState({ tplEdit: null, tplOpen: { ...this.state.tplOpen, [m.phaseOf(o2)]: true } }); return this.flash('Task added to checklist');
@@ -1144,6 +1569,7 @@ class Component extends DCLogic {
             if (o.name !== name) changes.push(['Task name', o.name, name]);
             if (o.offset !== o2) changes.push(['Timing', whenText(o.offset), whenText(o2)]);
             if (o.role !== E.role) changes.push(['Owner role', o.role, E.role]);
+            if ((o.category || '') !== E.category || !o.categorySet && o.categorySet !== undefined) changes.push(['Activity type', o.category || '—', E.category]);
             if (!!o.partnerOwned !== E.partnerOwned) changes.push(['Partner site does this', o.partnerOwned ? 'Yes' : 'No', E.partnerOwned ? 'Yes' : 'No']);
             if (o.types.slice().sort().join() !== E.types.slice().sort().join()) changes.push(['Program types', o.types.map(typeCode).join(', '), E.types.map(typeCode).join(', ')]);
             if ((o.dependsOn || []).join() !== E.dependsOn.join()) changes.push(['Waits for', String((o.dependsOn || []).length) + ' tasks', String(E.dependsOn.length) + ' tasks']);
@@ -1185,7 +1611,20 @@ class Component extends DCLogic {
           this.setState({ newUser: { name: '', email: '', role: 'Program Assistant' } }); this.flash(`${u.name} added`);
         },
       };
+      const noCatSteps = db.TemplateTasks.filter(x => x.categorySet === false), noCatTasks = tasks.filter(x => x.categorySet === false);
       out.ad = {
+        missingCats: noCatSteps.length + noCatTasks.length, hasMissingCats: noCatSteps.length + noCatTasks.length > 0,
+        missingLabel: `${noCatSteps.length} checklist steps and ${noCatTasks.length} tasks have no activity type saved in Airtable yet. The app shows a suggested type based on each task's wording. Save the suggestions so they can be reviewed and corrected in Airtable.`,
+        backfilling: s.backfilling, fillLabel: s.backfilling ? 'Saving…' : `Save ${noCatSteps.length + noCatTasks.length} suggested types`,
+        fillCats: () => {
+          if (this.state.backfilling) return;
+          this.setState({ backfilling: true });
+          this.patchMany('TemplateTasks', noCatSteps.map(x => ({ id: x.id, patch: { category: x.category, categorySet: true } })));
+          this.patchMany('Tasks', noCatTasks.map(x => ({ id: x.id, patch: { category: x.category, categorySet: true } })));
+          this.log({ field: 'Activity types filled in', from: '', to: `${noCatSteps.length} steps, ${noCatTasks.length} tasks` });
+          this.flash('Saving suggested activity types to Airtable…');
+          setTimeout(() => this.setState({ backfilling: false }), 4000);
+        },
         isMock: this.api.mode === 'mock',
         modeHelp: this.api.mode === 'mock' ? 'Running on sample data stored in this browser. Point the app at a server proxy that holds the Airtable token to switch to live data — no UI changes needed.' : 'Reading and writing through the server proxy.',
         reset: async () => { const db2 = await this.api.reset(); this.setState({ db: db2, taskId: null }); this.flash('Demo data reset'); },
@@ -1200,29 +1639,112 @@ class Component extends DCLogic {
       };
     }
 
+    if (view === 'calendar') {
+      const month = /^\d{4}-\d{2}$/.test(s.calMonth || '') ? s.calMonth : t0.slice(0, 7);
+      const [Y, M] = month.split('-').map(Number);
+      const first = `${month}-01`, last = m.iso(new Date(Y, M, 0));
+      const gridStart = m.addDays(first, -m.parse(first).getDay()), gridEnd = m.addDays(last, 6 - m.parse(last).getDay());
+      const mineOnly = s.calMine ?? (access.includes('mytasks') && me.role !== 'Executive Director');
+      const progF = liveP(s.calProgram) ? s.calProgram : 'all', catF = s.calCat || 'all';
+      const base = tasks.filter(t => liveP(t.programId) && (!mineOnly || t.ownerId === me.id) && (progF === 'all' || t.programId === progF) && (s.calDone || t.status !== 'Done'));
+      const pool = base.filter(t => catF === 'all' || t.category === catF);
+      const progs = db.Programs.filter(p => !p.archived && (progF === 'all' || p.id === progF));
+      const byDay = {};
+      pool.forEach(t => { if (t.due >= gridStart && t.due <= gridEnd) (byDay[t.due] = byDay[t.due] || []).push(t); });
+      const d1 = {}; progs.forEach(p => { if (p.day1 >= gridStart && p.day1 <= gridEnd) (d1[p.day1] = d1[p.day1] || []).push(p); });
+      const item = t => {
+        const c = CAT[t.category] || CAT_NONE, od = t.status !== 'Done' && t.due < t0;
+        return { label: `${t.priority ? '⚑ ' : ''}${t.name}`, title: `${t.name} · ${(pById[t.programId] || {}).name} · ${t.status}${od ? ' · overdue' : ''}`, bg: t.status === 'Done' ? '#F1F3F7' : c.bg, fg: t.status === 'Done' ? '#56627F' : c.fg, bar: od ? WARN : c.bar, deco: t.status === 'Done' ? 'line-through' : 'none', open: () => this.setState({ taskId: t.id, note: '' }) };
+      };
+      const weeks = [];
+      for (let w = gridStart; w <= gridEnd; w = m.addDays(w, 7)) {
+        weeks.push({
+          days: Array.from({ length: 7 }, (_, i) => {
+            const date = m.addDays(w, i), list = (byDay[date] || []).sort((a, b) => (b.priority - a.priority) || (a.status === 'Done') - (b.status === 'Done'));
+            const starts = (d1[date] || []).map(p => ({ label: `Day 1 · ${p.name}`, title: `Day 1 of ${p.name}`, bg: '#14213D', fg: '#FFFFFF', bar: '#14213D', deco: 'none', open: () => access.includes('programs') && this.go('program', { programId: p.id, tab: 'timeline' }) }));
+            const all = [...starts, ...list.map(item)], inMonth = date.slice(0, 7) === month, isToday = date === t0, selected = s.calDay === date;
+            return {
+              num: m.parse(date).getDate(), items: all.slice(0, 3), more: all.length - 3, hasMore: all.length > 3,
+              aria: `${m.fmtLong(date)}: ${list.length} task${list.length === 1 ? '' : 's'}${starts.length ? `, ${starts.length} program start` : ''}`,
+              bg: selected ? '#EEF3FD' : inMonth ? '#FFFFFF' : '#F7F8FB', numBg: isToday ? '#2340A8' : 'transparent', numFg: isToday ? '#FFFFFF' : inMonth ? '#14213D' : '#8792AC',
+              select: () => this.setState({ calDay: selected ? null : date }),
+            };
+          }),
+        });
+      }
+      const shiftMonth = n => { const d = new Date(Y, M - 1 + n, 1); this.setState({ calMonth: m.iso(d).slice(0, 7), calDay: null }); };
+      const dayList = s.calDay ? pool.filter(t => t.due === s.calDay).map(vm) : [];
+      const key = (() => { try { return localStorage.getItem('nmu_passcode') || ''; } catch (e) { return ''; } })();
+      const feed = q => `${location.origin}/api/calendar?${new URLSearchParams({ ...(key ? { key } : {}), ...q })}`;
+      out.cal = {
+        monthLabel: new Date(Y, M - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }), weeks,
+        prev: () => shiftMonth(-1), next: () => shiftMonth(1), today: () => this.setState({ calMonth: t0.slice(0, 7), calDay: t0 }),
+        summary: `${pool.filter(t => t.due >= first && t.due <= last).length} task${pool.length === 1 ? '' : 's'} this month${mineOnly ? ' assigned to you' : ''} · ${progs.filter(p => p.day1 >= first && p.day1 <= last).length} program start${progs.filter(p => p.day1 >= first && p.day1 <= last).length === 1 ? '' : 's'}`,
+        mine: mineOnly, canMine: access.includes('mytasks'), toggleMine: () => this.setState({ calMine: !mineOnly }),
+        showDone: !!s.calDone, toggleDone: () => this.setState({ calDone: !s.calDone }),
+        progOpts: db.Programs.filter(p => !p.archived).map(p => ({ id: p.id, name: p.name })), program: progF, progKey: 'p' + progF, onProgram: e => this.setState({ calProgram: e.target.value }),
+        cats: catChips(base, catF, k => this.setState({ calCat: k })),
+        hasDay: !!s.calDay, dayLabel: s.calDay ? m.fmtLong(s.calDay) : '', dayTasks: dayList, dayEmpty: !!s.calDay && !dayList.length,
+        closeDay: () => this.setState({ calDay: null }),
+        ics: () => this.exportICS(pool, progs),
+        live: this.api.mode !== 'mock', mock: this.api.mode === 'mock', sub: !!s.calSub, openSub: () => this.setState({ calSub: true }), closeSub: () => this.setState({ calSub: false }),
+        feedMine: feed({ owner: me.id }), feedAll: feed({}), hasPasscode: !!key,
+        copyMine: () => navigator.clipboard.writeText(feed({ owner: me.id })).then(() => this.flash('Link copied'), () => this.flash('Copy failed — select the link and copy it')),
+        copyAll: () => navigator.clipboard.writeText(feed({})).then(() => this.flash('Link copied'), () => this.flash('Copy failed — select the link and copy it')),
+      };
+    }
+
     // Task drawer
     const t = s.taskId && tById[s.taskId];
     out.hasTask = !!t;
-    out.closeTask = () => this.setState({ taskId: null });
+    out.closeTask = () => this.setState({ taskId: null, rename: null, linkDraft: { title: '', url: '' } });
     out.note = s.note; out.onNote = e => this.setState({ note: e.target.value });
     out.noteEmpty = !s.note.trim(); out.noteOpacity = s.note.trim() ? 1 : 0.45;
     if (t) {
       const p = pById[t.programId] || {}, off = m.diffDays(t.due, p.day1);
       const owner = uById[t.ownerId];
+      const lockFiles = readOnly || !!p.archived;
+      const ld = s.linkDraft || { title: '', url: '' };
       out.dr = {
+        canRename: !readOnly && !isPartner && !p.archived, renaming: s.rename !== null && s.rename !== undefined, notRenaming: s.rename === null || s.rename === undefined, renameVal: s.rename || '',
+        startRename: () => this.setState({ rename: t.name }), onRename: e => this.setState({ rename: e.target.value }), cancelRename: () => this.setState({ rename: null }),
+        saveRename: () => { const v = (this.state.rename || '').trim(); if (v && v !== t.name) this.setTask(t, 'name', v); this.setState({ rename: null }); },
+        cats: m.CATEGORIES, category: t.category || '', catKey: t.id + (t.category || '-'), lockCat: readOnly || isPartner || !!p.archived,
+        onCat: e => this.setTask(t, 'category', e.target.value),
+        priority: !!t.priority, prioLabel: t.priority ? 'Flagged as priority' : 'Flag as priority', prioIcon: t.priority ? 'ph-fill ph-flag' : 'ph ph-flag',
+        prioBg: t.priority ? '#FBE4E0' : '#FFFFFF', prioFg: t.priority ? FLAG : '#2E3A59', prioBorder: t.priority ? FLAG : '#8792AC',
+        togglePrio: () => this.setTask(t, 'priority', !t.priority),
+        lockFiles, canEditFiles: !lockFiles, uploading: s.uploading, uploadOpacity: s.uploading ? 0.6 : 1, uploadLabel: s.uploading ? 'Uploading…' : 'Attach a file',
+        onFile: e => { const f = e.target.files && e.target.files[0]; e.target.value = ''; this.upload(t, f); },
+        files: (t.attachments || []).map(a => ({ name: a.filename, url: a.url, meta: fmtSize(a.size), removeLabel: `Remove ${a.filename}`,
+          remove: () => { this.patch('Tasks', t.id, { attachments: (t.attachments || []).filter(x => x.id !== a.id) }); this.log({ programId: t.programId, taskId: t.id, field: 'File removed', from: a.filename, to: '' }); } })),
+        links: (t.links || []).map((l, i) => ({ title: l.title, url: l.url, removeLabel: `Remove link ${l.title}`,
+          remove: () => { this.patch('Tasks', t.id, { links: (t.links || []).filter((_, j) => j !== i) }); this.log({ programId: t.programId, taskId: t.id, field: 'Link removed', from: l.title, to: '' }); } })),
+        linkTitle: ld.title, linkUrl: ld.url,
+        onLinkTitle: e => this.setState({ linkDraft: { ...this.state.linkDraft, title: e.target.value } }),
+        onLinkUrl: e => this.setState({ linkDraft: { ...this.state.linkDraft, url: e.target.value } }),
+        linkInvalid: !/^https?:\/\/\S+\.\S+/.test((ld.url || '').trim()),
+        addLink: () => {
+          const d = this.state.linkDraft, url = (d.url || '').trim(); if (!/^https?:\/\//.test(url)) return;
+          const title = (d.title || '').trim() || url.replace(/^https?:\/\//, '').slice(0, 60);
+          this.patch('Tasks', t.id, { links: [...(t.links || []), { title, url }] });
+          this.log({ programId: t.programId, taskId: t.id, field: 'Link added', from: '', to: title });
+          this.setState({ linkDraft: { title: '', url: '' } });
+        },
         kicker: `${p.name} · ${m.phaseOf(off)}`, name: t.name, ownerKey: t.id + (t.ownerId || '-'), due: t.due, ownerId: t.ownerId, role: t.role,
         tags: [m.timingLabel(off), t.partnerOwned ? 'Partner-owned' : '', t.manualDate ? 'Date set manually' : '', t.templateId ? '' : 'Added task', (t.supportRoles || []).length ? `With: ${t.supportRoles.join(', ')}` : ''].filter(Boolean),
-        lockStatus: readOnly, lockPlan: readOnly || isPartner,
+        lockStatus: readOnly || !!p.archived, lockPlan: readOnly || isPartner || !!p.archived,
         statusOpts: m.STATUSES.map(x => { const on = t.status === x, c = ST[x]; return { label: x, selected: on, bg: on ? c.bg : 'transparent', fg: on ? c.fg : '#46526F', border: on ? c.bg : '#8792AC', set: () => this.setTask(t, 'status', x) }; }),
         onDue: e => e.target.value && this.setTask(t, 'due', e.target.value),
         onOwner: e => this.setTask(t, 'ownerId', e.target.value),
         ownerOpts: users.filter(u => u.active && (u.role !== 'Partner' || u.programId === t.programId)).map(u => ({ id: u.id, label: `${u.name} · ${u.role}` })),
         reminder: `Email reminders go to ${owner ? owner.name : 'the owner (unassigned)'}${t.partnerOwned ? ' and the site contact' : ''} on ${m.fmt(m.addDays(t.due, -7))} and ${m.fmt(t.due)}.`,
-        deps: (t.dependsOn || []).map(id => tById[id]).filter(Boolean).map(d => ({ name: d.name, status: d.status, bg: ST[d.status].bg, fg: ST[d.status].fg, open: () => this.setState({ taskId: d.id }) })),
-        blocks: tasks.filter(x => (x.dependsOn || []).includes(t.id)).map(d => ({ name: d.name, dueLabel: m.fmt(d.due), open: () => this.setState({ taskId: d.id }) })),
+        deps: (t.dependsOn || []).map(id => tById[id]).filter(Boolean).map(d => ({ name: d.name, status: d.status, bg: ST[d.status].bg, fg: ST[d.status].fg, open: () => this.setState({ taskId: d.id, rename: null }) })),
+        blocks: tasks.filter(x => (x.dependsOn || []).includes(t.id)).map(d => ({ name: d.name, dueLabel: m.fmt(d.due), open: () => this.setState({ taskId: d.id, rename: null }) })),
         notes: (t.notes || '').split('\n').filter(Boolean),
         log: db.ChangeLog.filter(l => l.taskId === t.id).sort((a, b) => a.at < b.at ? 1 : -1).map(l => this.logVM(l, uById, tById, pById)),
       };
+      out.dr.hasFiles = out.dr.files.length > 0; out.dr.hasLinks = out.dr.links.length > 0; out.dr.noFiles = !out.dr.hasFiles && !out.dr.hasLinks;
       out.dr.hasDeps = out.dr.deps.length > 0; out.dr.hasBlocks = out.dr.blocks.length > 0; out.dr.hasLog = out.dr.log.length > 0;
       out.addNote = () => {
         const txt = this.state.note.trim(); if (!txt) return;

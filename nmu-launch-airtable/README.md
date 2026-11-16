@@ -14,6 +14,9 @@ Browser (public/index.html)  →  /api/airtable/<table>  (server route, holds th
 - `nmu-data.js`: data layer. `AT` lists every Airtable table and field name the app uses. The Airtable adapter translates between the app's records and the base.
 - `public/nmu-bundle.js`: generated from `nmu-template.js` + `nmu-data.js`. After editing either, run `npm run bundle`.
 - `pages/api/airtable/[table].js`: server route that adds the token, checks the optional passcode, and only allows the app's nine tables.
+- `pages/api/upload.js`: uploads a file (up to 3 MB) to a task's Attachments field in Airtable.
+- `pages/api/calendar.js`: an .ics feed of open tasks and Day 1 dates for subscribing in Google Calendar.
+- `lib/server.js`: shared server helpers (env vars, passcode check, paging through a table).
 - Next.js is only there so the host can run that server route. There are no React pages; `/` serves `public/index.html`.
 
 ## Settings
@@ -36,6 +39,25 @@ Locally, copy `.env.example` to `.env.local`, then `npm install` and `npm run de
 4. Save and deploy. Pushes to `main` redeploy automatically.
 
 `amplify.yml` copies those variables into `.env.production` during the build, because Amplify does not pass them to the running server otherwise. After changing a variable, redeploy.
+
+## Features added from NMU feedback (Catalina & Mary)
+
+| Feedback | Where it lives |
+| --- | --- |
+| Prioritize programs, by state; program tabs; custom ordering | All programs: Active / Archived tabs, state tabs, ★ pin (shared, Session → Pinned), sort menu |
+| Filter by type, city, state, dates and weeks, combined | All programs filter bar (search, type, city, Day 1 period incl. this/next week and a custom range) |
+| Start up to 6 months in the past | New program: Day 1 can be up to 183 days ago, with an option to mark past tasks done. Checklists now have a "4–6 months prior" phase |
+| Select tasks on the timeline; handle unexpected changes | Program timeline: checkboxes + bulk bar (status, owner, type, move ±days, set date, flag) |
+| Reusable task titles with details | Add task: title suggestions from the checklists and earlier added tasks; picking one fills role and type; details become the first note. Any task can be renamed |
+| Task priority; at-a-glance view | Flag as priority (Work → Priority). My tasks opens with Overdue / Due in 7 days / Flagged / Blocked cards and a Flagged group on top |
+| Color-coding by status and activity type | Activity types (Funding, Admin, Outreach, Logistics, Instruction) color each task; overdue rows are tinted orange |
+| Archive programs, keep history | Archive / Restore on the program page (Session → Archived). Archived programs are read-only and keep every task, file and log entry |
+| File uploads and links on tasks (critical) | Task drawer: attach files (Work → Attachments) and links (Work → Links) |
+| Calendar view / Google Calendar | Calendar screen (month view), Download .ics, and a subscribe link for Google Calendar |
+| Export to Google Sheets | Export to Sheets on All programs and each program (CSV; in Sheets use File → Import) |
+
+Airtable fields these use: Site → City, State · Session → Pinned, Archived · Steps → Category · Work → Category, Priority, Attachments, Links.
+Steps and tasks without a saved Category show a type suggested from their wording; Users & data has a button to save those suggestions to Airtable.
 
 ## Notes and limits
 
