@@ -31,7 +31,7 @@ const TEMPLATE_ROWS = [
   ["3 months prior","Ask the host contact to share the campaign with alumni","Marketing Director",[]],
   ["2 months prior","Coordinate a joint social media announcement with the host","Marketing Director",[]],
   ["2 months prior","Review past donor records for local supporters and contact them","Executive Director",[]],
-  ["2 months prior","Reach out to personal and board connections in the area","Executive Director",["Board Member"]],
+  ["2 months prior","Reach out to personal and board connections in the area","Executive Director",[]],
   ["2 months prior","Build relationships with local community organizations and schools","Program Assistant",[]],
   ["2 months prior","Request in-kind donations of program supplies","Program Manager",[]],
   ["2 months prior","File the signed partnership agreement in the shared folder","Program Manager",[]],
@@ -155,7 +155,7 @@ const TEMPLATE_ROWS = [
 // a deployed site). The proxy (api/airtable/[table].js) adds the AIRTABLE_TOKEN server-side and
 // forwards to https://api.airtable.com/v0/{BASE_ID}/{table}. Never put the token in the browser.
 
-const ROLES = ['Program Manager', 'Program Assistant', 'Executive Director', 'Marketing Director', 'Operations Director', 'Grant Writer', 'Board Member', 'Partner'];
+const ROLES = ['Program Manager', 'Program Assistant', 'Executive Director', 'Marketing Director', 'Operations Director', 'Grant Writer', 'Partner'];
 const STATUSES = ['Not started', 'In progress', 'Blocked', 'Done'];
 
 // Activity types. Tasks are color-coded by these. A step's category is suggested from its wording
@@ -318,7 +318,6 @@ function seed() {
     ['usr_riley', 'Riley Chen', 'riley@nmu.org', 'Marketing Director'],
     ['usr_morgan', 'Morgan Patel', 'morgan@nmu.org', 'Operations Director'],
     ['usr_casey', 'Casey Nguyen', 'casey@nmu.org', 'Grant Writer'],
-    ['usr_avery', 'Avery Stone', 'avery@nmu.org', 'Board Member'],
     ['usr_chris', 'Chris Dunn', 'cdunn@uw.edu', 'Partner', 'prg_uw'],
     ['usr_sarah', 'Sarah Lin', 'slin@ymcatacoma.org', 'Partner', 'prg_ymca'],
   ].map(([id, name, email, role, programId]) => ({ id, name, email, role, programId: programId || '', active: true }));
@@ -368,7 +367,7 @@ function seed() {
 }
 
 // ---------- adapters ----------
-const KEY = 'nmu-launch-proto-db-v3';
+const KEY = 'nmu-launch-proto-db-v4';
 const clone = o => JSON.parse(JSON.stringify(o));
 
 function createMockAdapter() {
@@ -502,7 +501,7 @@ function createAirtableAdapter({ proxyUrl }) {
       const f = r.fields, tpl = tplById[one(f[A.work.step])] || {};
       return {
         id: r.id, programId: one(f[A.work.session]), templateId: one(f[A.work.step]), name: f[A.work.name] || tpl.name || 'Untitled task',
-        due: f[A.work.due] || '', status: f[A.work.status] || (f[A.work.completed] ? 'Done' : 'Not started'),
+        due: f[A.work.due] || '', status: f[A.work.status] || (f[A.work.completed] ? 'Done' : 'Not started'), doneOn: f[A.work.completed] || '',
         role: roleName[one(f[A.work.role])] || tpl.role || '', ownerId: one(f[A.work.owner]), notes: f[A.work.notes] || '',
         dependsOn: many(f[A.work.deps]), partnerOwned: !!f[A.work.partner], manualDate: !!f[A.work.manualDue],
         supportRoles: tpl.supportRoles || [],

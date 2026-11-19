@@ -59,6 +59,23 @@ Locally, copy `.env.example` to `.env.local`, then `npm install` and `npm run de
 Airtable fields these use: Site → City, State · Session → Pinned, Archived · Steps → Category · Work → Category, Priority, Attachments, Links.
 Steps and tasks without a saved Category show a type suggested from their wording; Users & data has a button to save those suggestions to Airtable.
 
+## Forward design (Team 6 proposal, Nov 18 2026)
+
+Applied from "NMU Launch Planner · Forward Proposal". Working surfaces (task rows, status menus, chips, tables) keep today's look; expression is added at page openings, big numbers, the Day 1 rulers and the partner portal.
+
+| Area | What changed |
+| --- | --- |
+| Roles (section 9) | Job titles map to access levels: Admin = Executive Director; Program Manager; Other Staff = Program Assistant, Grant Writer, Marketing Director, Operations Director; Partner POC = Partner. **Board Member removed.** Pages and buttons a level can't use are hidden. Other Staff change status on their own tasks only (others show a read-only label). Program types and Users & data are Admin-only. Users & data shows NMU's permission table and an Access level column |
+| Navigation | 72px icon rail with the round logo; opens over the page on hover, keyboard focus or the expand button; "Keep menu open" brings back the sidebar (remembered in this browser). Tablet: labeled 76px rail. Phone: top bar + bottom tabs |
+| My tasks | Compact header by default ("Show overview" opens the greeting, mission line and hero with counts and rulers). Program tabs (All programs, pinned programs, More programs), a When filter, one Open \| Include completed control, a sentence saying what's shown, Clear filters. Overdue never hides and lists blocked, then holding-up, then flagged, then oldest. Today gets its own group. Finished tasks collect in a collapsed Completed group with their done date |
+| All programs | Runway \| List \| Table views. Pinned for everyone group first, then grouped by state (Group by: State, Program type, Day 1 month, None). State is one searchable dropdown with counts. Long groups show "Show N more". Pinning is "Pin for everyone" (Admins and Program Managers) with an Undo confirmation |
+| Program detail | Compact card by default (Day 1 + micro ruler, work done bar, partnership pair); "Show overview" opens the serif title, countdown and full Day 1 ruler with tide marks. "Needs attention" and "Coming up", then the rest by phase. When changes only dates; Open \| Include completed changes only finished tasks. Site details: fields-added meter, "+ Add" for editors, "Not added yet" for others |
+| Calendar | Same Open \| Include completed control; with one program chosen: D−n labels, Day 1 cell tint, final-countdown tint and a countdown badge |
+| Change history | Plain-language feed under day headings, filter by kind (Dates, Statuses, Pins and settings); bursts of the same change within 5 minutes group into one expandable line. The program History tab uses the same feed |
+| New program / Program types / Partner portal | Live preview of what will be created; checklist ruler (no today line); warmer portal opening, "Your site" card and reminder copy |
+
+Not built (implementation dependencies D1–D3 in the proposal): partner sign-in, partner upload review states, and server-side enforcement of the role table. Hiding controls is not security.
+
 ## Notes and limits
 
 - Due dates are calculated in Airtable: Manual Due Date if set, otherwise Session Start Date − Offset Days. Moving a single task's date stores a Manual Due Date. Moving Day 1 changes the session's Start Date, and completed tasks are pinned to their old dates first.

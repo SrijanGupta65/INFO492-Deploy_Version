@@ -29,7 +29,7 @@ export const TEMPLATE_ROWS = [
   ["3 months prior","Ask the host contact to share the campaign with alumni","Marketing Director",[]],
   ["2 months prior","Coordinate a joint social media announcement with the host","Marketing Director",[]],
   ["2 months prior","Review past donor records for local supporters and contact them","Executive Director",[]],
-  ["2 months prior","Reach out to personal and board connections in the area","Executive Director",["Board Member"]],
+  ["2 months prior","Reach out to personal and board connections in the area","Executive Director",[]],
   ["2 months prior","Build relationships with local community organizations and schools","Program Assistant",[]],
   ["2 months prior","Request in-kind donations of program supplies","Program Manager",[]],
   ["2 months prior","File the signed partnership agreement in the shared folder","Program Manager",[]],

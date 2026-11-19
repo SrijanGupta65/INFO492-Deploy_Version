@@ -8,7 +8,7 @@ import { TEMPLATE_ROWS } from './nmu-template.js';
 // a deployed site). The proxy (api/airtable/[table].js) adds the AIRTABLE_TOKEN server-side and
 // forwards to https://api.airtable.com/v0/{BASE_ID}/{table}. Never put the token in the browser.
 
-export const ROLES = ['Program Manager', 'Program Assistant', 'Executive Director', 'Marketing Director', 'Operations Director', 'Grant Writer', 'Board Member', 'Partner'];
+export const ROLES = ['Program Manager', 'Program Assistant', 'Executive Director', 'Marketing Director', 'Operations Director', 'Grant Writer', 'Partner'];
 export const STATUSES = ['Not started', 'In progress', 'Blocked', 'Done'];
 
 // Activity types. Tasks are color-coded by these. A step's category is suggested from its wording
@@ -171,7 +171,6 @@ function seed() {
     ['usr_riley', 'Riley Chen', 'riley@nmu.org', 'Marketing Director'],
     ['usr_morgan', 'Morgan Patel', 'morgan@nmu.org', 'Operations Director'],
     ['usr_casey', 'Casey Nguyen', 'casey@nmu.org', 'Grant Writer'],
-    ['usr_avery', 'Avery Stone', 'avery@nmu.org', 'Board Member'],
     ['usr_chris', 'Chris Dunn', 'cdunn@uw.edu', 'Partner', 'prg_uw'],
     ['usr_sarah', 'Sarah Lin', 'slin@ymcatacoma.org', 'Partner', 'prg_ymca'],
   ].map(([id, name, email, role, programId]) => ({ id, name, email, role, programId: programId || '', active: true }));
@@ -221,7 +220,7 @@ function seed() {
 }
 
 // ---------- adapters ----------
-const KEY = 'nmu-launch-proto-db-v3';
+const KEY = 'nmu-launch-proto-db-v4';
 const clone = o => JSON.parse(JSON.stringify(o));
 
 export function createMockAdapter() {
@@ -355,7 +354,7 @@ export function createAirtableAdapter({ proxyUrl }) {
       const f = r.fields, tpl = tplById[one(f[A.work.step])] || {};
       return {
         id: r.id, programId: one(f[A.work.session]), templateId: one(f[A.work.step]), name: f[A.work.name] || tpl.name || 'Untitled task',
-        due: f[A.work.due] || '', status: f[A.work.status] || (f[A.work.completed] ? 'Done' : 'Not started'),
+        due: f[A.work.due] || '', status: f[A.work.status] || (f[A.work.completed] ? 'Done' : 'Not started'), doneOn: f[A.work.completed] || '',
         role: roleName[one(f[A.work.role])] || tpl.role || '', ownerId: one(f[A.work.owner]), notes: f[A.work.notes] || '',
         dependsOn: many(f[A.work.deps]), partnerOwned: !!f[A.work.partner], manualDate: !!f[A.work.manualDue],
         supportRoles: tpl.supportRoles || [],
